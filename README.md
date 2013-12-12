@@ -1,0 +1,4 @@
+hale
+====
+
+HALe specification draft
