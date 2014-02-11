@@ -13,9 +13,9 @@ There is an emergence of non-HTML HTTP applications ("Web APIs") which use hyper
 
 The JSON Hypertext Application Language Extended (HALE) is a standard which establishes conventions for expressing hypermedia documents with JSON [RFC4627].
 
-HALE is a general purpose media type with which Web APIs can be developed. Clients of these APIs can interact with services by reference to their relation type and use the HALE document to fulfull those relationships in order to progress through the application.
+HALE is a general purpose media type with which Web APIs can be developed. Clients of these APIs can interact with services by reference to their relation type and use the HALE document to fulfill those relationships in order to progress through the application.  
 
-HALE's conventions result in a uniform interface for serving and consuming hypermedia, enabling the creation of general-purpose libraries that can be re-used on any API utilising HALE.
+HALE's conventions result in a uniform interface for serving and consuming hypermedia, enabling the creation of general-purpose libraries that can be re-used on any API utilizing HALE.
 
 The primary design goals of HALE are completeness, generality and simplicity.  
 HALE can be applied to many different domains, and imposes the minimal amount of structure necessary to cover the key requirements of a hypermedia API.
@@ -27,7 +27,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
 document are to be interpreted as described in [RFC2119].
 
 ## HALE Documents
-A HALE Document uses the format described in [RFC4627] and has the media type "application/hal+json".
+A HALE Document uses the format described in [RFC4627] and has the media type "application/hale+json".
 
 Its root object MUST be a Resource Object.
 
@@ -35,10 +35,10 @@ For example:
 ```
    GET /orders/523 HTTP/1.1
    Host: example.org
-   Accept: application/hal+json
+   Accept: application/hale+json
 
    HTTP/1.1 200 OK
-   Content-Type: application/hal+json
+   Content-Type: application/hale+json
 ```
 ```json
    {
@@ -55,7 +55,7 @@ For example:
 
 Here, we have a HAL document representing an order resource with the URI "/orders/523".  It has "warehouse" and "invoice" links, and its own state in the form of "currency", "status", and "total" properties.
 
-(expand)
+_(to do: expand)_
 
 ## Resource Objects
 A Resource Object represents a resource.
@@ -74,7 +74,7 @@ All other properties MUST be valid JSON, and represent the current state of the 
 The reserved "_meta" property is OPTIONAL.
 
 It is an object whose properties provide information about the resource or resource attributes.  
-The values must be a jalid JSON object.
+The values must be a valid JSON object.
 Defining a _meta attribute automatically defines a document *Class* Object.
 
 ### _links
@@ -192,7 +192,7 @@ _target specifies that the information from a _source target can be found in a s
 
 
 ## Link Objects
-A Link Object represents a relationship from the containing resource to a URI, and the information necassary to fulfill that relationship.
+A Link Object represents a relationship from the containing resource to a URI, and the information necessary to fulfill that relationship.
 It has the following properties:
 
 ### href
@@ -207,7 +207,7 @@ The "templated" property is OPTIONAL.
 
 Its value is boolean and SHOULD be true when the Link Object's "href" property is a URI Template.
 
-Its value SHOULD be considered false if it is undefined or any other value than true.
+Its value SHOULD be considered false if it is undefined, or any other value than true.
 
 ### type
 The "type" property is OPTIONAL.
@@ -219,7 +219,7 @@ The "deprecation" property is OPTIONAL.
 
 Its presence indicates that the link is to be deprecated (i.e. removed) at a future date.  Its value is a URL that SHOULD provide further information about the deprecation.
 
-A client SHOULD provide some notification (for example, by logging a warning message) whenever it traverses over a link that has this property.  The notification SHOULD include the deprecation property's value so that a client manitainer can easily find information about the deprecation.
+A client SHOULD provide some notification (for example, by logging a warning message) whenever it traverses over a link that has this property.  The notification SHOULD include the deprecation property's value so that a client maintainer can easily find information about the deprecation.
 
 ### name
 The "name" property is OPTIONAL.
@@ -234,7 +234,7 @@ Its value is a string which is a URI that hints about the profile (as defined by
 ### title
 The "title" property is OPTIONAL.
 
-Its value is a string and is intended for labelling the link with a human-readable identifier (as defined by [RFC5988]).
+Its value is a string and is intended for labeling the link with a human-readable identifier (as defined by [RFC5988]).
 
 ### hreflang
 The "hreflang" property is OPTIONAL.
@@ -249,7 +249,7 @@ It specifies the uniform-interface method (e.g. HTTP) method that fulfills the s
 ### parameters
 The "parameters" property is OPTIONAL.
 
-It specifies Constraint Objects which apply to the URL Template variables. A parameters attribute implies that the specified URL is templated. A parameter attribute implies a constraint on a url parameter and should be incuded if there is a constraint.
+It specifies Constraint Objects which apply to the URL Template variables. A parameters attribute implies that the specified URL is templated. A parameter attribute implies a constraint on a url parameter and should be included if there is a constraint.
 
 (consider removing this and subbing templated)
 
@@ -259,12 +259,12 @@ The "attributes" property is OPTIONAL.
 It specifies Constraint Objects which apply to the Request body. Specifying attributes implies that the specified relationship requires a Request Body to be fulfilled.
 
 ### enctype
-The "enctypre" property is OPTIONAL.
+The "enctype" property is OPTIONAL.
 
 May be a list or a string.  If it is a string the server only accepts requests of that mediatype.
 If it is a lite, the server will accept any of the mediatypes specified.
-specifies the media type that should be used to make the request.
-defaults to application/x-www-form-urlencoded
+Specifies the media type that should be used to make the request.
+Defaults to application/x-www-form-urlencoded
 
 ## Constraint Objects
 A constraint object may specify a Default or Constraint Parameters.  
@@ -273,7 +273,7 @@ If it specifies Constraint Parameters it must be an object.
 
 ### Default
 A (string or number) specifies that the attribute is of that type, and is of that value currently or by default.
-A List specifies multiple values set for the same paramter, equivalent to a "name=John&name=Jane".
+A List specifies multiple values set for the same parameter, equivalent to a "name=John&name=Jane".
 
 ### Constraint Parameters
 A Constraint Objects has the following reserved properties.  Any other value will be considered a Validator Object.
@@ -311,12 +311,12 @@ In is a boolean. If "in" is specified the Constraint Object must specify "option
 ### min
 The "min" property is OPTIONAL.
 
-The constraint 'min' specifies that the value of a request parameter is below a certain value. If the value is a string it specifies lexical order, if the value is a number it is threated as a numerical constraint.
+The constraint 'min' specifies that the value of a request parameter is below a certain value. If the value is a string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
 
 ### max
 The "max" property is OPTIONAL.
 
-The constraint 'max' specifies that the value of a request parameter is above a certain value. If the value is a string it specifies lexical order, if the value is a number it is threated as a numerical constraint.
+The constraint 'max' specifies that the value of a request parameter is above a certain value. If the value is a string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
 
 ### maxlength
 The "maxlength" property is OPTIONAL.
@@ -326,12 +326,12 @@ Specifies the maximum length of a string, the maximum number of items in a list,
 ### pattern
 The "pattern" property is OPTIONAL.
 
-Pettern specifies the PCRE regular expression that a string must conform to.
+Pattern specifies the PCRE regular expression that a string must conform to.
 
 ### multi
 The "multi" property is OPTIONAL.
 
-Muli is a boolean that specifies whether or not more than one of an item is allowed.  (i.e. ?name=foo&name=bar)
+Multi is a boolean that specifies whether or not more than one of an item is allowed.  (i.e. ?name=foo&name=bar)
 
 ### required
 The "required" property is OPTIONAL.
@@ -340,7 +340,7 @@ This object must be a boolean.  When a Constraint Object specifies the Required 
 
 ### constraint extensions
 
-Other attributes are considered constraint extensions. It may be an object or a reference. If it is a reference it must refer to something which conforms. Anything under a constrain extension MUST soecify a profile tag giving a link that describes the constraint. The other attributes must match the tags specified int he profile.
+Other attributes are considered constraint extensions. It may be an object or a reference. If it is a reference it must refer to something which conforms. Anything under a constrain extension MUST specify a profile tag giving a link that describes the constraint. The other attributes must match the tags specified in the profile.
 
 ## Example Document
 ```json
@@ -416,7 +416,6 @@ Other attributes are considered constraint extensions. It may be an object or a 
                 "type": "http://alps.example.org/DRDs#drd"
             }
         ]   
-   "
 ```
 
 ## Media Type Parameters
@@ -432,7 +431,7 @@ HALE documents that are served with the "profile" parameter still SHOULD include
 Each Resource Object SHOULD contain a 'self' link that corresponds with the IANA registered 'self' relation (as defined by [RFC5988]) whose target is the resource's URI.
 
 ### Link Relations
-Custom link relation types (Extension Relation Types in [RFC5988]) SHOULD be URIs that when dereferenced in a web browser provide relevant documentation, in the form of an HTML page, about the meaning and/or behaviour of the target Resource.  This will improve the discoverability of the API.
+Custom link relation types (Extension Relation Types in [RFC5988]) SHOULD be URIs that when dereferenced in a web browser provide relevant documentation, in the form of an HTML page, about the meaning and/or behavior of the target Resource.  This will improve the discoverability of the API.
 
 The CURIE Syntax [W3C.NOTE-curie-20101216] or Document Classes MAY be used for brevity for these URIs.  CURIEs are established within a HALE document via a set of Link Objects with the relation type "curies" on the root Resource Object. Classes are established within a HALE document via the _meta property. 
 These links contain a URI Template with the token 'rel', and are named via the "name" property.
@@ -459,7 +458,7 @@ The "hypertext cache pattern" allows servers to use embedded resources to dynami
 
 Clients MAY be automated for this purpose so that, for any given link relation, they will read from an embedded resource (if present) in preference to traversing a link.
 
-To activate this client behaviour for a given link, servers SHOULD add an embedded resource into the representation with the same relation.
+To activate this client behavior for a given link, servers SHOULD add an embedded resource into the representation with the same relation.
 
 Servers SHOULD NOT entirely "swap out" a link for an embedded resource (or vice versa) because client support for this technique is OPTIONAL.
 
