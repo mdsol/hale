@@ -1,24 +1,42 @@
-# HALe - Hypertext Application Language Extended
+# Hale - Hypertext Application Language Extension
 ====
 ## Abstract
 This document specifies a proper extension to HAL as defined at
 http://tools.ietf.org/html/draft-kelly-json-hal-06
 
-As a proper extension every HAL document is intended to be a proper HALE document.
-HALE provides two extensions to HAL. Specifically it extends the definition of _link and adds a new reserved document keyword called _meta.
+As a proper extension every HAL document is intended to be a proper Hale document and vice-versa. Hale provides two 
+primary extensions to HAL. Specifically it extends the properties of Link Objects and adds a new reserved document 
+keyword called _meta.
 
 ## Introduction
 
-There is an emergence of non-HTML HTTP applications ("Web APIs") which use hyperlinks to direct clients around their resources.
+There is an emergence of non-HTML HTTP applications ("Web APIs") which use hyperlinks to direct clients around their 
+resources.
 
-The JSON Hypertext Application Language Extended (HALE) is a standard which establishes conventions for expressing hypermedia documents with JSON [RFC4627].
+The JSON Hypertext Application Language Extension (Hale) is a standard which establishes conventions for expressing 
+hypermedia documents with JSON [RFC4627].
 
-HALE is a general purpose media type with which Web APIs can be developed. Clients of these APIs can interact with services by reference to their relation type and use the HALE document to fulfill those relationships in order to progress through the application.  
+Hale is a general purpose media type with which Web APIs can be developed. Clients of these APIs can interact with 
+services by reference to their relation type and use the Hale document to fulfill those relationships in order to 
+progress through the application.  
 
-HALE's conventions result in a uniform interface for serving and consuming hypermedia, enabling the creation of general-purpose libraries that can be re-used on any API utilizing HALE.
+Hale's conventions result in a uniform interface for serving and consuming hypermedia, enabling the creation of 
+general-purpose libraries that can be re-used on any API utilizing Hale.
 
-The primary design goals of HALE are completeness, generality and simplicity.  
-HALE can be applied to many different domains, and imposes the minimal amount of structure necessary to cover the key requirements of a hypermedia API.
+The primary design goals of Hale are completeness, generality, simplicity and machine-to-machine (M2M) friendliness, the 
+later being a primary motivator for the extension of HAL. 
+ 
+The HAL media-type is purposefully light and requires referencing human-readable documentation or CONNEG with 
+machine-readable external service descriptor documents (e.g. WADL, RAML, etc.) to understand href template values and 
+their constraints, body attributes and their constraints for particular links, and to determine associated 
+uniform interface methods of the protocol expected for the link.
+
+Instead of forcing M2M clients to understand any arbitrary number of possible machine-readable, external, service 
+descriptor formats, Hale inherently includes features so that an M2M client only needs to understand the Hale 
+media-type to interact with an API that implements these optional features.
+
+Hale can be applied to many different domains, and imposes the minimal amount of structure necessary to cover the key 
+requirements of a hypermedia API.
 
 ## Requirements
 
@@ -26,8 +44,8 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
 "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
 document are to be interpreted as described in [RFC2119].
 
-## HALE Documents
-A HALE Document uses the format described in [RFC4627] and has the media type "application/hale+json".
+## Hale Documents
+A Hale Document uses the format described in [RFC4627] and has the media type "application/vnd.hale+json".
 
 Its root object MUST be a Resource Object.
 
@@ -35,17 +53,18 @@ For example:
 ```
    GET /orders/523 HTTP/1.1
    Host: example.org
-   Accept: application/hale+json
+   Accept: application/vnd.hale+json
 
    HTTP/1.1 200 OK
-   Content-Type: application/hale+json
+   Content-Type: application/vnd.hale+json
 ```
 ```json
    {
      "_links": {
        "self": { "href": "/orders/523" },
        "warehouse": { "href": "/warehouse/56" },
-       "invoice": { "href": "/invoices/873" }
+       "invoice": { "href": "/invoices/873" },
+       "process": { "href": "/orders/523/process" }
      },
      "currency": "USD",
      "status": "shipped",
@@ -53,7 +72,8 @@ For example:
    }
 ```
 
-Here, we have a HAL document representing an order resource with the URI "/orders/523".  It has "warehouse" and "invoice" links, and its own state in the form of "currency", "status", and "total" properties.
+Here, we have a HAL document representing an order resource with the URI "/orders/523".  It has "warehouse" and 
+"invoice" links, and its own state in the form of "currency", "status", and "total" properties.
 
 _(to do: expand)_
 
@@ -64,7 +84,7 @@ It has three reserved properties:
 
 1. "_meta": contains information about the resource or resource elements which are not themselves resource attributes.
 2. "_links": contains information about relationships with other resources
-3. "_embedded": contains an embedded resource which must be a valid HALE document
+3. "_embedded": contains an embedded resource which must be a valid Hale document
 
 All other properties MUST be valid JSON, and represent the current state of the resource.
 
@@ -85,12 +105,12 @@ It is an object whose property names are link relation types (as defined by [RFC
 ### _embedded
 The reserved "_embedded" property is OPTIONAL
 
-It is an object whose property names are link relation types (as defined by [RFC5988]) and values are either a HALE Object or an array of HALE Objects.
+It is an object whose property names are link relation types (as defined by [RFC5988]) and values are either a Hale Object or an array of Hale Objects.
 
 Embedded Resources MAY be a full, partial, or inconsistent version of the representation served from the target URI.
 
 ## Class Objects
-A class object represents an arbitrary json document which MAY be referenced by other JSON keys inside a HALE document.
+A class object represents an arbitrary json document which MAY be referenced by other JSON keys inside a Hale document.
 A Class Objects reserves the properties _source and _target.
 
 ### Class References
@@ -422,9 +442,9 @@ Other attributes are considered constraint extensions. It may be an object or a 
 
 ### profile
 
-The media type identifier application/hale+json MAY also include an additional "profile" parameter (as defined by [I-D.wilde-profile-link])
+The media type identifier application/vnd.hale+json MAY also include an additional "profile" parameter (as defined by [I-D.wilde-profile-link])
 
-HALE documents that are served with the "profile" parameter still SHOULD include a "profile" relationship belonging to the root resource.
+Hale documents that are served with the "profile" parameter still SHOULD include a "profile" relationship belonging to the root resource.
 
 ## Recommendations
 ### Self Link
@@ -433,7 +453,7 @@ Each Resource Object SHOULD contain a 'self' link that corresponds with the IANA
 ### Link Relations
 Custom link relation types (Extension Relation Types in [RFC5988]) SHOULD be URIs that when dereferenced in a web browser provide relevant documentation, in the form of an HTML page, about the meaning and/or behavior of the target Resource.  This will improve the discoverability of the API.
 
-The CURIE Syntax [W3C.NOTE-curie-20101216] or Document Classes MAY be used for brevity for these URIs.  CURIEs are established within a HALE document via a set of Link Objects with the relation type "curies" on the root Resource Object. Classes are established within a HALE document via the _meta property. 
+The CURIE Syntax [W3C.NOTE-curie-20101216] or Document Classes MAY be used for brevity for these URIs.  CURIEs are established within a Hale document via a set of Link Objects with the relation type "curies" on the root Resource Object. Classes are established within a Hale document via the _meta property. 
 These links contain a URI Template with the token 'rel', and are named via the "name" property.
 ```json
    {
