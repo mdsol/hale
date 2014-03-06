@@ -1,12 +1,12 @@
 # Hale - Hypertext Application Language Extension
-====
+
 ## Abstract
 This document specifies a proper extension to HAL as defined at
 http://tools.ietf.org/html/draft-kelly-json-hal-06
 
 As a proper extension every HAL document is intended to be a proper Hale document and vice-versa. Hale provides two 
-primary extensions to HAL. Specifically it extends the properties of Link Objects and adds a new reserved document 
-keyword called _meta.
+primary extensions to HAL. Specifically it adds a new reserved document keyword called _meta that defines a document
+Reference Object and extends the properties of HAL Link Objects. 
 
 ## Introduction
 
@@ -28,12 +28,13 @@ later being a primary motivator for the extension of HAL.
  
 The HAL media-type is purposefully light and requires referencing human-readable documentation or CONNEG with 
 machine-readable external service descriptor documents (e.g. WADL, RAML, etc.) to understand href template values and 
-their constraints, body attributes and their constraints for particular links, and to determine associated 
+their constraints, form attributes and their constraints for particular links, and to determine associated 
 uniform interface methods of the protocol expected for the link.
 
-Instead of forcing M2M clients to understand any arbitrary number of possible machine-readable, external, service 
-descriptor formats, Hale inherently includes features so that an M2M client only needs to understand the Hale 
-media-type to interact with an API that implements these optional features.
+Instead of forcing APIs to externalize service descriptors that lend themselves to tight-coupling or M2M clients to 
+understand any arbitrary number of possible machine-readable, external, service descriptor formats, Hale inherently 
+includes features so that a M2M client only needs to understand the Hale media-type to late-bind and interact with an 
+API that implements these optional features.
 
 Hale can be applied to many different domains, and imposes the minimal amount of structure necessary to cover the key 
 requirements of a hypermedia API.
@@ -44,227 +45,177 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
 "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
 document are to be interpreted as described in [RFC2119].
 
-## Hale Documents
-A Hale Document uses the format described in [RFC4627] and has the media type "application/vnd.hale+json".
-
-Its root object MUST be a Resource Object.
-
-For example:
-```
-   GET /orders/523 HTTP/1.1
-   Host: example.org
-   Accept: application/vnd.hale+json
-
-   HTTP/1.1 200 OK
-   Content-Type: application/vnd.hale+json
-```
-```json
-   {
-     "_links": {
-       "self": { "href": "/orders/523" },
-       "warehouse": { "href": "/warehouse/56" },
-       "invoice": { "href": "/invoices/873" },
-       "process": { "href": "/orders/523/process" }
-     },
-     "currency": "USD",
-     "status": "shipped",
-     "total": 10.20
-   }
-```
-
-Here, we have a HAL document representing an order resource with the URI "/orders/523".  It has "warehouse" and 
-"invoice" links, and its own state in the form of "currency", "status", and "total" properties.
-
-_(to do: expand)_
-
 ## Resource Objects
-A Resource Object represents a resource.
+Hale adds an additional reserved property to a HAL Resource Object:
 
-It has three reserved properties:
-
-1. "_meta": contains information about the resource or resource elements which are not themselves resource attributes.
-2. "_links": contains information about relationships with other resources
-3. "_embedded": contains an embedded resource which must be a valid Hale document
-
-All other properties MUST be valid JSON, and represent the current state of the resource.
+(1) "_meta": contains reference metadata about the resource.
 
 ### Reserved Properties
 
-### _meta
+#### _meta
 The reserved "_meta" property is OPTIONAL.
 
-It is an object whose properties provide information about the resource or resource attributes.  
-The values must be a valid JSON object.
-Defining a _meta attribute automatically defines a document *Class* Object.
+It is an object whose properties provide information about the resource or resource attributes.  The values must be a 
+valid JSON object.
 
-### _links
-The reserved "_links" property is OPTIONAL.
+Defining a _meta attribute automatically defines a document *Reference Object*.
 
-It is an object whose property names are link relation types (as defined by [RFC5988]) and values are either a Link Object or an array of Link Objects.  The subject resource of these links is the Resource Object of which the containing "_links" object is a property.
+## Reference Objects
+Hale introduces Reference Objects that represents an arbitrary JSON document which MAY be referenced by other 
+JSON objects inside a Hale document.
 
-### _embedded
-The reserved "_embedded" property is OPTIONAL
+It has two reserved properties:
 
-It is an object whose property names are link relation types (as defined by [RFC5988]) and values are either a Hale Object or an array of Hale Objects.
+(1) "_ref": contains an array of Reference Object properties chain-ordered for inheriting attributes from other JSON 
+objects.
+(2) "_src": contains a HAL link object referencing a remote resource.
 
-Embedded Resources MAY be a full, partial, or inconsistent version of the representation served from the target URI.
+### Reserved Properties
 
-## Class Objects
-A class object represents an arbitrary json document which MAY be referenced by other JSON keys inside a Hale document.
-A Class Objects reserves the properties _source and _target.
+#### _ref
+The reserved "_ref" property is OPTIONAL.
 
-### Class References
-When a _meta attribute defines a Class Object, all attributes defined for that class apply to any attribute that references that class.  A class reference starts with "className." and the what follows the "." is treated as that attribute name.
+It is an array of strings corresponding to properties of particular Reference Object in a document. A client SHOULD 
+resolve a "_ref" chain when encountered in a Reference Object in a document. 
 
-For example
+A client MUST resolve a "_ref" chain hierarchically starting in the nearest "_meta" tag of the current Resource Object. 
+Given the recursive structure of HAL, if the particular value is not discovered in the current Resource Object, the 
+client SHOULD look in a Resource Object embedding the current Resource Object.
 
-```json
-{
-  "_meta": {
-    "data": {
-      "options": [0,1,2],
-      "value": 2
-      }
-    },
-  "data.something": {
-    "max": 1,
-    "value": 0,
-  }
-}
-```
+The inheritance hierarchy for common Reference Object attributes is the value of the current Reference Object supersedes
+those in the objects specified.
 
-would be interpreted as
+The client should first evaluate any classes that exist in the top level of the document and apply the class 
+attribute to any sub attribute anywhere in the document.  If _meta has been defined in an embedded resource, 
+the _meta classes only apply to the attributes within that resource.  
+
+
+Example:
 
 ```json
 {
   "_meta": {
     "data": {
-      "options": [0,1,2],
-      "value": 2
+      "options": [0, 1, 2],
+      "value": 0
       }
     },
-  "something": {
-    "max": 1,
-    "value": 0,
-    "options": [0,1,2]
+    "data1": {
+      "_ref": ["data"],
+      "value": 1
+    },
+    "something": {
+      "max": 1,
+      "value": 2
+    },
+    "something_else": {
+      "_ref": ["data1", "something"]
+    },
+    "_embedded" : {
+      "_meta": {
+        "embedded_something": {
+          "_ref": ["something"]
+          "value": 4
+        }
+      }
+    }
   }
 }
 ```
 
-The client should first evaluate any classes that exist in the top level of the document and apply the class attribute to any sub attribute anywhere in the document.  If _meta has been defined in an embedded resource, the _meta classes only apply to the attributes within that resource.  
-
-A class object also has the following properties:
-
-
-### Multiple Classes
-An object may reference multiple classes.  When evaluating these attributes first apply the top level class, then apply the next class, and so forth.
-
-E.g.
-```json
-{
-  "_meta": {
-    "data": {
-      "options": [0,1,2]
-      "value": 2
-      },
-    "data2": {
-      "options": [1,2,3]
-      }
-    },
-  "data.data2.something": {
-    "max": 1,
-    "value": 0,
-  }
-}
-```
-
-would be interpreted as
+would be interpreted as:
 
 ```json
 {
   "_meta": {
     "data": {
-      "options": [0,1,2]
-      "value": 2
-      },
-    "data2": {
-      "widget": true,
-      "options": [1,2,3]
+      "options": [0, 1, 2],
+      "value": 0
       }
     },
-  "something": {
-    "max": 1,
-    "value": 0,
-    "options": [1,2,3],
-    "widget": true
+    "data1": {
+      "options": [0, 1, 2],
+      "value": 1
+    },
+    "something": {
+      "max": 1,
+      "value": 2
+    }
+    "something_else": {
+      "options": [0, 1, 2],
+      "max": 1
+      "value": 2
+    }
+  },
+  "_embedded" : {
+     "_meta": {
+       "embedded_something": {
+         "max": 1
+         "value": 4
+       }
+     }
+   }
+}
+```
+
+####  _src
+The reserved "_src" property is OPTIONAL.
+
+Its value is a HAL Link Object.
+
+The client SHOULD dereference the associated resource and conneg media-types it understands, if not specified in the 
+Link Object. 
+
+Unless a "_target" property is specified, the client SHOULD fill in any attributes of the Reference Object with those 
+of the resource with the caveat that in the case of like attributes, the attribute of the Resource Object supersedes 
+that of the de-referenced resource.
+
+Example:
+
+```json
+{
+  "_meta": {
+    "data": {
+      "occupation": "lurking",
+      "_src": { "rel": "thing", "href": "...", "type": "application/json" }
+    }
   }
 }
 ```
 
-### Mixing Classes and Curies
-Classes have a higher operator precedence than curies.  A client should apply all class dereferences before dereferencing curies.
+would be interpreted as:
 
-### _source
-_source tells the client that it needs to find more information from a remote resource.  The client is instructed to dereference that resource and fill in any class attributes with those specified.
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 273
 
-### _target
-_target specifies that the information from a _source target can be found in a specified location.  If the media format is JSON then target should specify an JSONPATH [http://goessner.net/articles/JsonPath/], if it is XML it should specify an XPATH [RFC 5261].  
+{
+  "name": "Alex Olsen",
+  "occupation": "scientist"
+}
+```
 
+```json
+{
+  "_meta": {
+    "data": {
+      "name": "Alex Olsen",
+      "occupation": "lurking"
+    }
+  }
+}
+```
 
 ## Link Objects
-A Link Object represents a relationship from the containing resource to a URI, and the information necessary to fulfill that relationship.
+A Link Object represents a relationship from the containing resource to a URI, and the information necessary to fulfill 
+that relationship.
 It has the following properties:
-
-### href
-The "href" property is REQUIRED.
-
-Its value is either a URI [RFC3986] or a URI Template [RFC6570].
-
-If the value is a URI Template then the Link Object SHOULD have a "templated" attribute whose value is true.
-
-### templated
-The "templated" property is OPTIONAL.
-
-Its value is boolean and SHOULD be true when the Link Object's "href" property is a URI Template.
-
-Its value SHOULD be considered false if it is undefined, or any other value than true.
-
-### type
-The "type" property is OPTIONAL.
-
-Its value is a string used as a hint to indicate the media type expected when dereferencing the target resource.
-
-### deprecation
-The "deprecation" property is OPTIONAL.
-
-Its presence indicates that the link is to be deprecated (i.e. removed) at a future date.  Its value is a URL that SHOULD provide further information about the deprecation.
-
-A client SHOULD provide some notification (for example, by logging a warning message) whenever it traverses over a link that has this property.  The notification SHOULD include the deprecation property's value so that a client maintainer can easily find information about the deprecation.
-
-### name
-The "name" property is OPTIONAL.
-
-Its value MAY be used as a secondary key for selecting Link Objects which share the same relation type.
-
-### profile
-The "profile" property is OPTIONAL.
-
-Its value is a string which is a URI that hints about the profile (as defined by [I-D.wilde-profile-link]) of the target resource.
-
-### title
-The "title" property is OPTIONAL.
-
-Its value is a string and is intended for labeling the link with a human-readable identifier (as defined by [RFC5988]).
-
-### hreflang
-The "hreflang" property is OPTIONAL.
-
-Its value is a string and is intended for indicating the language of the target resource (as defined by [RFC5988]).
 
 ### method
 The "method" property is OPTIONAL.
 
-It specifies the uniform-interface method (e.g. HTTP) method that fulfills the specified relationship.
+It specifies the uniform-interface method (e.g. HTTP.GET) that fulfills the specified relationship.
 
 ### parameters
 The "parameters" property is OPTIONAL.
@@ -285,6 +236,15 @@ May be a list or a string.  If it is a string the server only accepts requests o
 If it is a lite, the server will accept any of the mediatypes specified.
 Specifies the media type that should be used to make the request.
 Defaults to application/x-www-form-urlencoded
+
+### _target
+
+The reserved "_target" property is OPTIONAL.
+
+_target specifies that the information from a _source target can be found in a specified location.  If the media 
+format is JSON then target should specify an JSONPATH [http://goessner.net/articles/JsonPath/], if it is XML it 
+should specify an XPATH [RFC 5261].  
+
 
 ## Constraint Objects
 A constraint object may specify a Default or Constraint Parameters.  
