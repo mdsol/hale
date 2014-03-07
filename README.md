@@ -1,12 +1,12 @@
 # Hale - Hypertext Application Language Extension
 
 ## Abstract
-This document specifies a proper extension to HAL as defined at
-http://tools.ietf.org/html/draft-kelly-json-hal-06
+This document specifies a proper extension to the 
+[Hypertext Application Language (HAL)](http://tools.ietf.org/html/draft-kelly-json-hal-06).
 
-As a proper extension every HAL document is intended to be a proper Hale document and vice-versa. Hale provides two 
-primary extensions to HAL. Specifically it adds a new reserved document keyword called _meta that defines a document
-Reference Object and extends the properties of HAL Link Objects. 
+As a proper extension, every HAL document is intended to be a proper Hale document. Hale provides two 
+primary extensions to HAL. Specifically it adds a new reserved document keyword called _meta that defines document
+Reference Objects and extends the properties of HAL Link Objects. 
 
 ## Introduction
 
@@ -26,24 +26,37 @@ general-purpose libraries that can be re-used on any API utilizing Hale.
 The primary design goals of Hale are completeness, generality, simplicity and machine-to-machine (M2M) friendliness, the 
 later being a primary motivator for the extension of HAL. 
  
-The HAL media-type is purposefully light and requires referencing human-readable documentation or CONNEG with 
-machine-readable external service descriptor documents (e.g. WADL, RAML, etc.) to understand href template values and 
-their constraints, form attributes and their constraints for particular links, and to determine associated 
+The base HAL media-type is purposefully light and requires referencing human-readable documentation or content 
+negotiation for machine-readable external service descriptor documents (e.g. WADL, RAML, etc.) to understand link 
+template values and their constraints, form-related attributes and their constraints, and to determine associated 
 uniform interface methods of the protocol expected for the link.
 
-Instead of forcing APIs to externalize service descriptors that lend themselves to tight-coupling or M2M clients to 
-understand any arbitrary number of possible machine-readable, external, service descriptor formats, Hale inherently 
+Instead of forcing APIs to externalize service descriptors that lend themselves to tight-coupling or M2M clients having
+to understand any arbitrary number of possible machine-readable, service descriptor formats, Hale inherently 
 includes features so that a M2M client only needs to understand the Hale media-type to late-bind and interact with an 
-API that implements these optional features.
+API that implements these optional features. 
 
 Hale can be applied to many different domains, and imposes the minimal amount of structure necessary to cover the key 
 requirements of a hypermedia API.
 
 ## Requirements
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
-"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
-document are to be interpreted as described in [RFC2119].
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and 
+"OPTIONAL" in this document are to be interpreted as described in [RFC2119].
+
+## Overview
+The following extensions to HAL are detailed in the following sections:
+
+(1) Extends HAL Resource Objects with a new reserved property "_meta" that defines Hale Reference Objects.
+
+(2) Introduces Hale Reference Objects that include two reserved properties "_ref" and "_src" for detailing reference
+metadata associated with a Resource Object.
+
+(3) Introduces Hale "Input Objects" that specify metadata and constraints associated with values that can be set by
+clients including URI template variables and request body attributes. 
+
+(4) Extends HAL Link Objects to inherit from Hale Reference Objects and to include the new properties "method", 
+"data", "embed" and "target".
 
 ## Resource Objects
 Hale adds an additional reserved property to a HAL Resource Object:
@@ -61,22 +74,25 @@ valid JSON object.
 Defining a _meta attribute automatically defines a document *Reference Object*.
 
 ## Reference Objects
-Hale introduces Reference Objects that represents an arbitrary JSON document which MAY be referenced by other 
-JSON objects inside a Hale document.
+Hale introduces Reference Objects that represent arbitrary JSON documents which MAY be referenced by other 
+JSON objects inside a Hale document. All JSON objects in a Reference Object are themselves Reference Objects. The 
+primary purpose of Reference Objects is to simply, yet flexibly, provide a simple way to DRY documents and extend
+other Hale objects in meaningful and useful ways at runtime.
 
 It has two reserved properties:
 
 (1) "_ref": contains an array of Reference Object properties chain-ordered for inheriting attributes from other JSON 
 objects.
-(2) "_src": contains a HAL link object referencing a remote resource.
+
+(2) "_src": contains a HAL Link Object referencing a remote resource.
 
 ### Reserved Properties
 
 #### _ref
 The reserved "_ref" property is OPTIONAL.
 
-It is an array of strings corresponding to properties of particular Reference Object in a document. A client SHOULD 
-resolve a "_ref" chain when encountered in a Reference Object in a document. 
+It is an array of strings corresponding to properties of a particular Reference Object in a document. A client SHOULD 
+resolve a "_ref" declaration when encountered in a Reference Object in a document. 
 
 A client MUST resolve a "_ref" chain hierarchically starting in the nearest "_meta" tag of the current Resource Object. 
 Given the recursive structure of HAL, if the particular value is not discovered in the current Resource Object, the 
@@ -88,7 +104,6 @@ those in the objects specified.
 The client should first evaluate any classes that exist in the top level of the document and apply the class 
 attribute to any sub attribute anywhere in the document.  If _meta has been defined in an embedded resource, 
 the _meta classes only apply to the attributes within that resource.  
-
 
 Example:
 
@@ -161,23 +176,23 @@ would be interpreted as:
 ####  _src
 The reserved "_src" property is OPTIONAL.
 
-Its value is a HAL Link Object.
+Its value is a Hale Link Object.
 
-The client SHOULD dereference the associated resource and conneg media-types it understands, if not specified in the 
-Link Object. 
+The client SHOULD dereference the associated resource and content-negotiate media-types it understands, if `type` 
+attribute is not specified in the Link Object.
 
-Unless a "_target" property is specified, the client SHOULD fill in any attributes of the Reference Object with those 
-of the resource with the caveat that in the case of like attributes, the attribute of the Resource Object supersedes 
-that of the de-referenced resource.
+Unless a "target" property is specified in the Link Object, the client SHOULD completely fill in any attributes of the 
+Reference Object with those of the resource with the caveat that in the case of like attributes, the attribute of the 
+Resource Object supersedes that of the de-referenced resource. See Link Object ["target"]() for more information.
 
 Example:
 
 ```json
 {
   "_meta": {
-    "data": {
-      "occupation": "lurking",
-      "_src": { "rel": "thing", "href": "...", "type": "application/json" }
+    "explosion": {
+      "occupation": "swamp thing",
+      "_src": { "rel": "person", "href": "...", "method": "GET", "type": "application/json" }
     }
   }
 }
@@ -192,135 +207,121 @@ Content-Length: 273
 
 {
   "name": "Alex Olsen",
-  "occupation": "scientist"
+  "occupation": "Scientist",
+  "status": "human"
 }
 ```
 
 ```json
 {
   "_meta": {
-    "data": {
+    "explosion": {
       "name": "Alex Olsen",
-      "occupation": "lurking"
+      "occupation": "Swamp Thing"
     }
   }
 }
 ```
 
-## Link Objects
-A Link Object represents a relationship from the containing resource to a URI, and the information necessary to fulfill 
-that relationship.
-It has the following properties:
+## Data Objects
+Hale Data Objects inherit from Hale Reference Objects and specify metadata and constraints associated with values that 
+can be set by a client in exercising a link. A Data Object has the following properties:
 
-### method
-The "method" property is OPTIONAL.
-
-It specifies the uniform-interface method (e.g. HTTP.GET) that fulfills the specified relationship.
-
-### parameters
-The "parameters" property is OPTIONAL.
-
-It specifies Constraint Objects which apply to the URL Template variables. A parameters attribute implies that the specified URL is templated. A parameter attribute implies a constraint on a url parameter and should be included if there is a constraint.
-
-(consider removing this and subbing templated)
-
-### attributes
-The "attributes" property is OPTIONAL.
-
-It specifies Constraint Objects which apply to the Request body. Specifying attributes implies that the specified relationship requires a Request Body to be fulfilled.
-
-### enctype
-The "enctype" property is OPTIONAL.
-
-May be a list or a string.  If it is a string the server only accepts requests of that mediatype.
-If it is a lite, the server will accept any of the mediatypes specified.
-Specifies the media type that should be used to make the request.
-Defaults to application/x-www-form-urlencoded
-
-### _target
-
-The reserved "_target" property is OPTIONAL.
-
-_target specifies that the information from a _source target can be found in a specified location.  If the media 
-format is JSON then target should specify an JSONPATH [http://goessner.net/articles/JsonPath/], if it is XML it 
-should specify an XPATH [RFC 5261].  
-
-
-## Constraint Objects
-A constraint object may specify a Default or Constraint Parameters.  
-If it specifies a Default it MUST be either a literal (Number or String), or a List.
-If it specifies Constraint Parameters it must be an object.
-
-### Default
-A (string or number) specifies that the attribute is of that type, and is of that value currently or by default.
-A List specifies multiple values set for the same parameter, equivalent to a "name=John&name=Jane".
-
-### Constraint Parameters
-A Constraint Objects has the following reserved properties.  Any other value will be considered a Validator Object.
+### Metadata Properties
 
 #### description
 The "description" property is OPTIONAL.
 
 Specifies a Human Readable Description.
 
+#### prompt
+TODO: Do we want this?
+
 #### type
 The "type" property is OPTIONAL.
 
-Specifies the expected parameter type.
+Specifies the expected type. Allowed values are "string", "number", or "object".
 
-#### options
-The "options" property is OPTIONAL.
+#### scope
+The "scope" property is OPTIONAL.
 
-If options is specified it MUST be a list. Options specifies possible values.
+Specifies the scope of the input value. Allowed values are "href" or "body". 
+
+Specifying "href" indicates the object only applies to URI template variables with the same name. The value "body" 
+indicates the object only applies to generating a body object to send with the request. 
+
+If unspecified, the object only applies to the request body.
+
+#### data
+Allows recursively defining data properties of objects if a particular input is structured.
+
+TODO: Is this necessary or should a service just 422 and send information to correct the issue? Do what extent can
+profiles help this.
+
+#### profile
+TODO: would this make sense.
+
 
 #### value
 The "value" property is OPTIONAL.
 
-value - specifies the current or default value
+Specifies the current or default value
 
-## Validator Objects
-A validator specifies a property of a Constraint Object that must be true in order to fulfill a relationship.
+### Constraint Properties
 
-The following are all reserved validators.  Any other property will be considered a Validator Extension.
+#### options
+The "options" property is OPTIONAL.
 
-### in
+If options is specified it MUST be a list. Options specifies possible for the associated data. The list can either be
+an array of "strings" or an array of JSON objects keyed by the value to be used (this may need to be a Reference
+Object) to specify more about what property to use).
+
+#### in
 The "in" property is OPTIONAL.
 
-In is a boolean. If "in" is specified the Constraint Object must specify "options".  The constraint "in" specifies that the value of a request parameter or attribute MUST be within the specified set of "options" in order to fulfill the relationship.
+In is a boolean. If "in" is specified the Constraint Object must specify "options".  The constraint "in" 
+specifies that the value of a request parameter or attribute MUST be within the specified set of "options" in 
+order to fulfill the relationship.
 
-### min
+#### min
 The "min" property is OPTIONAL.
 
-The constraint 'min' specifies that the value of a request parameter is below a certain value. If the value is a string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
+The constraint 'min' specifies that the value of a request parameter is below a certain value. If the value is a 
+string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
 
-### max
+#### max
 The "max" property is OPTIONAL.
 
-The constraint 'max' specifies that the value of a request parameter is above a certain value. If the value is a string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
+The constraint 'max' specifies that the value of a request parameter is above a certain value. If the value is a 
+string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
 
-### maxlength
+#### maxlength
 The "maxlength" property is OPTIONAL.
 
-Specifies the maximum length of a string, the maximum number of items in a list, or the maximum number of digits in a number.
+Specifies the maximum length of a string, the maximum number of items in a list, or the maximum number of digits in a 
+number.
 
-### pattern
+#### pattern
 The "pattern" property is OPTIONAL.
 
 Pattern specifies the PCRE regular expression that a string must conform to.
 
-### multi
+#### multi
 The "multi" property is OPTIONAL.
 
 Multi is a boolean that specifies whether or not more than one of an item is allowed.  (i.e. ?name=foo&name=bar)
 
-### required
+#### required
 The "required" property is OPTIONAL.
 
-This object must be a boolean.  When a Constraint Object specifies the Required this attribute must be included in the request to fulfill the relationship.
+This object must be a boolean.  When a Constraint Object specifies the Required this attribute must be included in the 
+request to fulfill the relationship.
 
-### constraint extensions
+#### Constraint Extensions
 
-Other attributes are considered constraint extensions. It may be an object or a reference. If it is a reference it must refer to something which conforms. Anything under a constrain extension MUST specify a profile tag giving a link that describes the constraint. The other attributes must match the tags specified in the profile.
+Other attributes are considered constraint extensions. It may be an object or a reference. If it is a reference it must 
+refer to something which conforms. Anything under a constrain extension MUST specify a profile tag giving a 
+link that describes the constraint. The other attributes must match the tags specified in the profile.
 
 ## Example Document
 ```json
@@ -345,10 +346,9 @@ Other attributes are considered constraint extensions. It may be an object or a 
             "href": "http://alps.example.org/DRDs"
         },
         "create": {
-            "href": "http://deployment.example.org/drds{?create-drd}",
-            "templated": true,
+            "href": "http://deployment.example.org/drds",
             "method": "POST",
-            "attributes": {
+            "data": {
                "status": {
                   "required": true
                   },
@@ -375,7 +375,13 @@ Other attributes are considered constraint extensions. It may be an object or a 
             },
         "search": {
             "href": "http://deployment.example.org/drds{?search_term}",
-            "templated": true
+            "templated": true,
+            "data": {
+              "search_term": {
+                "maxlength": 50,
+                "scope": "href"
+              }
+            }
         },
         "help": {
             "href": "http://documentation.example.org/Things/DRDs"
@@ -395,91 +401,64 @@ Other attributes are considered constraint extensions. It may be an object or a 
                 "href": "http://deployment.example.org/drds/1",
                 "type": "http://alps.example.org/DRDs#drd"
             }
-        ]   
+        ] 
+}
 ```
 
-## Media Type Parameters
+## Link Objects
+Hale extends Link Objects to inherit from Hale Reference Objects and introduces the following new properties:
 
-### profile
+### method
+The "method" property is OPTIONAL.
 
-The media type identifier application/vnd.hale+json MAY also include an additional "profile" parameter (as defined by [I-D.wilde-profile-link])
+It specifies the uniform-interface method (e.g. HTTP.GET) that fulfills the specified relationship.
 
-Hale documents that are served with the "profile" parameter still SHOULD include a "profile" relationship belonging to the root resource.
+### data
+The "inputs" property is OPTIONAL.
 
-## Recommendations
-### Self Link
-Each Resource Object SHOULD contain a 'self' link that corresponds with the IANA registered 'self' relation (as defined by [RFC5988]) whose target is the resource's URI.
+Keyed by input name that matches a URI template variable or a body property, it specifies the Input Objects defining 
+the allowed vales in exercising a link. Valid values are a single Input Object or an array of Input Objects for the
+rare but possible case where a naming collision exists between a URI template variable and a body property.
 
-### Link Relations
-Custom link relation types (Extension Relation Types in [RFC5988]) SHOULD be URIs that when dereferenced in a web browser provide relevant documentation, in the form of an HTML page, about the meaning and/or behavior of the target Resource.  This will improve the discoverability of the API.
+Example:
 
-The CURIE Syntax [W3C.NOTE-curie-20101216] or Document Classes MAY be used for brevity for these URIs.  CURIEs are established within a Hale document via a set of Link Objects with the relation type "curies" on the root Resource Object. Classes are established within a Hale document via the _meta property. 
-These links contain a URI Template with the token 'rel', and are named via the "name" property.
 ```json
-   {
-     "_links": {
-       "self": { "href": "/orders" },
-       "curies": [{
-         "name": "acme",
-         "href": "http://docs.acme.com/relations/{rel}",
-         "templated": true
-       }],
-       "acme:widgets": { "href": "/widgets" }
-     }
-   }
-```
+{
+  "_links": {
+    "update": {
+        "href": "...",
+        "data": {
+          "name": { "value": "Mike" },
+          "search" [   
+            { "value": yes, "scope": "body", "options": "yes,no" }, 
+            { "scope": "href" }
+        }
+        
+    }
+  }
+}
 
-The above demonstrates the relation "http://docs.acme.com/relations/widgets" being abbreviated to "acme:widgets" via CURIE syntax.
+### enctype
+The "enctype" property is OPTIONAL.
 
-### Hypertext Cache Pattern
+Specifies the media type that should be used to make the request.
 
-The "hypertext cache pattern" allows servers to use embedded resources to dynamically reduce the number of requests a client
- makes, improving the efficiency and performance of the application.
+MUST be a list or a string.  If it is a string the server only accepts requests of that media-type.
+If it is a list, the server will accept any of the media-types specified.
 
-Clients MAY be automated for this purpose so that, for any given link relation, they will read from an embedded resource (if present) in preference to traversing a link.
+Defaults to application/x-www-form-urlencoded.
 
-To activate this client behavior for a given link, servers SHOULD add an embedded resource into the representation with the same relation.
+### target
 
-Servers SHOULD NOT entirely "swap out" a link for an embedded resource (or vice versa) because client support for this technique is OPTIONAL.
+The reserved "target" property is OPTIONAL.
 
-The following examples shows the hypertext cache pattern applied to an "author" link:
-Before:
-```json
-   {
-     "_links": {
-       "self": { "href": "/books/the-way-of-zen" },
-       "author": { "href": "/people/alan-watts" }
-     }
-   }
-```
+"target" specifies that the information the subset of associated resource to return.  If the "type" property is 
+JSON then "target" should specify an JSONPATH [http://goessner.net/articles/JsonPath/], if it is XML it 
+should specify an XPATH [RFC 5261]. 
+ 
+The "target" property allows Reference Objects to be created from remote resources for use in generating "options" for 
+input attributes.
 
+## Authors
 
-   After:
-```json
-   {
-     "_links": {
-       "self": { "href": "/blog-post" },
-       "author": { "href": "/people/alan-watts" }
-     },
-     "_embedded": {
-       "author": {
-         "_links": { "self": { "href": "/people/alan-watts" } },
-         "name": "Alan Watts",
-         "born": "January 6, 1915",
-         "died": "November 16, 1973"
-       }
-     }
-   }
-```
-
-## Security Considerations
-...
-
-## IANA Considerations
-...
-
-## Appendix
-### Acknowledgements
-M. Kelly
-
-### Frequently Asked Questions
+Shea Valentine and Mark W. Foster
