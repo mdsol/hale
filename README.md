@@ -6,7 +6,7 @@ This document specifies a proper extension to the
 
 As a proper extension, every HAL document is intended to be a proper Hale document. Hale provides two 
 primary extensions to HAL. Specifically it adds a new reserved document keyword called _meta that defines document
-Reference Objects and extends the properties of HAL Link Objects. 
+*Reference Objects* and extends the properties of HAL *Link Object*s. 
 
 ## Introduction
 
@@ -47,21 +47,157 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 ## Overview
 The following extensions to HAL are detailed in the following sections:
 
-(1) Extends HAL Resource Objects with a new reserved property "_meta" that defines Hale Reference Objects.
+(1) Extends HAL *Resource Objects* with a new reserved property "_meta" that defines Hale *Reference Objects*.
 
-(2) Introduces Hale Reference Objects that include two reserved properties "_ref" and "_src" for detailing reference
-metadata associated with a Resource Object.
+(2) Introduces Hale *Reference Objects* that include a single reserved property "_ref" for detailing reference
+metadata associated with a *Resource Object*.
 
-(3) Introduces Hale "Input Objects" that specify metadata and constraints associated with values that can be set by
-clients including URI template variables and request body attributes. 
+(3) Extends HAL *Link Objects* to inherit from Hale *Reference Objects* and to include the new properties "method", 
+"data", "enctype", and "target".
 
-(4) Extends HAL Link Objects to inherit from Hale Reference Objects and to include the new properties "method", 
-"data", "embed" and "target".
+(4) Introduces Hale *Data Objects* that specify metadata and constraints associated with values that can be set by
+clients for URI template variables and request body attributes. 
+
+Example:
+```json
+{
+  "_meta": {
+    "lookup": {
+       "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
+    },
+    "edit_form": {
+      "method": "PUT",
+      "enctype": "application/json",
+      "data": {
+        "name": { "type": "string", "required": true },
+        "user_id": { "scope": "href" },
+        "_ref": ["lookup"]
+      }
+    }
+  },
+  "_links": {
+    "self": { "href": "..." },
+    "search": { 
+      "href": ".../{?send_info}",
+      "templated": true,
+      "method": "GET",
+      "data": { "_ref": ["lookup"] }
+    },
+    "agent": { "href": "/agent/1", "method": "GET", "_ref": [true] },
+    "customer": [ 
+      { "href": "/customer/1", "method": "GET" },
+      { "href": "/customer/2", "method": "GET" }
+    ]
+  },
+  "_embedded": {
+    "customer": [
+      {
+        "_links": {
+          "self": { "href": "/customer/1", "method": "GET" },
+          "edit": { "href": ".../{?user_id}", "_ref": [ "edit_form" ] }
+        },
+        "name": "Tom",
+        "send_info": "yes"
+      },
+      {
+        "_links": {
+          "self": { "href": "/customer/2", "method": "GET" },
+          "edit": { "href": ".../{?user_id}", "_ref": [ "edit_form" ] }
+        },
+        "name": "Harry",
+        "send_info": "no"
+      }
+    ]   
+  }
+}
+
+```
+
+would be interpreted by a client as:
+
+```json
+{
+  "_meta": {
+    "lookup": {
+      "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
+    },
+    "edit_form": {
+      "method": "PUT",
+      "enctype": "application/json",
+      "data": {
+        "name": { "type": "string", "required": true },
+        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true },
+        "user_id": { "scope": "href" }
+      }
+    }
+  },
+  "_links": {
+    "self": { "href": "..." },
+    "search": { 
+      "href": ".../{?send_info}",
+      "templated": true,
+      "method": "GET",
+      "data": { 
+        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
+      }
+    },
+    "agent": { "href": "/agent/1", "method": "GET" },
+    "customer": [ 
+      { "href": "/customer/1", "method": "GET" },
+      { "href": "/customer/2", "method": "GET" }
+    ]
+  },
+  "_embedded": {
+    "agent": {
+      "_links": {
+        "self": { "href": "/agent/1", "method": "GET" }
+      },
+      "name": "Mike"
+    },
+    "customer": [
+      {
+        "_links": {
+          "self": { "href": "/customer/1", "method": "GET" },
+          "edit": { 
+            "href": ".../{?user_id}",
+            "method": "PUT",
+            "enctype": "application/json",
+            "data": {
+              "name": { "type": "string", "required": true },
+              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true },
+              "user_id": { "scope": "href" }
+            }
+          }
+        },
+        "name": "Tom",
+        "send_info": "yes"
+      },
+      {
+        "_links": {
+          "self": { "href": "/customer/2", "method": "GET" },
+          "edit": { 
+            "href": ".../{?user_id}",
+            "method": "PUT",
+            "enctype": "application/json",
+            "data": {
+              "name": { "type": "string", "required": true },
+              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true },
+              "user_id": { "scope": "href" }
+            }
+          }
+        },
+        "name": "Harry",
+        "send_info": "no"
+      }
+    ]   
+  }
+}
+```
 
 ## Resource Objects
-Hale adds an additional reserved property to a HAL Resource Object:
+Hale adds an additional reserved property to a HAL *Resource Object*:
 
-(1) "_meta": contains reference metadata about the resource.
+"_meta": contains reference metadata about the resource.
 
 ### Reserved Properties
 
@@ -71,39 +207,46 @@ The reserved "_meta" property is OPTIONAL.
 It is an object whose properties provide information about the resource or resource attributes.  The values must be a 
 valid JSON object.
 
-Defining a _meta attribute automatically defines a document *Reference Object*.
+Defining a "_meta" attribute automatically defines a *Reference Object* for the related *Resource Object*.
 
 ## Reference Objects
-Hale introduces Reference Objects that represent arbitrary JSON documents which MAY be referenced by other 
-JSON objects inside a Hale document. All JSON objects in a Reference Object are themselves Reference Objects. The 
-primary purpose of Reference Objects is to simply, yet flexibly, provide a simple way to DRY documents and extend
+Hale introduces *Reference Objects* that represent arbitrary JSON documents which MAY be referenced by other 
+JSON objects inside a Hale document. All JSON objects in a *Reference Object*are themselves *Reference Objects*. The 
+primary purpose of *Reference Objects* is to simply, yet flexibly, provide a way to DRY documents and extend
 other Hale objects in meaningful and useful ways at runtime.
 
-It has two reserved properties:
+It has one reserved property:
 
-(1) "_ref": contains an array of Reference Object properties chain-ordered for inheriting attributes from other JSON 
-objects.
-
-(2) "_src": contains a HAL Link Object referencing a remote resource.
+"_ref": contains an ordered array of directives about de-referencing related objects and resources.
 
 ### Reserved Properties
 
 #### _ref
 The reserved "_ref" property is OPTIONAL.
 
-It is an array of strings corresponding to properties of a particular Reference Object in a document. A client SHOULD 
-resolve a "_ref" declaration when encountered in a Reference Object in a document. 
+Valid values are an array of:
 
-A client MUST resolve a "_ref" chain hierarchically starting in the nearest "_meta" tag of the current Resource Object. 
-Given the recursive structure of HAL, if the particular value is not discovered in the current Resource Object, the 
-client SHOULD look in a Resource Object embedding the current Resource Object.
+(1) strings corresponding to properties of a particular *Reference Object* in a *Resource Object* "_meta" 
+tag.
 
-The inheritance hierarchy for common Reference Object attributes is the value of the current Reference Object supersedes
-those in the objects specified.
+(2) *Link Objects* that should be de-referenced and it's attributes appended to the attributes
+of the associated *Reference Object*
 
-The client should first evaluate any classes that exist in the top level of the document and apply the class 
-attribute to any sub attribute anywhere in the document.  If _meta has been defined in an embedded resource, 
-the _meta classes only apply to the attributes within that resource.  
+(3) or a boolean, which when a property of a Link Object indicates the resource should be immediately de-referenced.
+
+A client SHOULD resolve all "_ref" declarations when encountered in a document according to the order of the array. 
+
+A client MUST resolve a "\_ref" chain hierarchically starting at the top-level in the nearest "\_meta" tag of the 
+current *Resource Object*. Given the recursive structure of HAL, if the particular value is not discovered in the 
+current *Resource Object*, the client SHOULD look in a *Resource Object* embedding the current *Resource Object*, if
+any.
+
+The inheritance hierarchy for common *Reference Object* attributes is the value of the de-referencing *Reference Object* 
+supersedes those in the objects referenced.  
+
+###### strings
+A string indicates the name of a Reference object property in a "_meta" tag in the current *Resource Object* or another
+*Resource Object* embedding the current resource object.
 
 Example:
 
@@ -113,7 +256,6 @@ Example:
     "data": {
       "options": [0, 1, 2],
       "value": 0
-      }
     },
     "data1": {
       "_ref": ["data"],
@@ -129,8 +271,7 @@ Example:
     "_embedded" : {
       "_meta": {
         "embedded_something": {
-          "_ref": ["something"]
-          "value": 4
+          "_ref": ["something_else"]
         }
       }
     }
@@ -146,7 +287,6 @@ would be interpreted as:
     "data": {
       "options": [0, 1, 2],
       "value": 0
-      }
     },
     "data1": {
       "options": [0, 1, 2],
@@ -155,35 +295,33 @@ would be interpreted as:
     "something": {
       "max": 1,
       "value": 2
-    }
+    },
     "something_else": {
       "options": [0, 1, 2],
-      "max": 1
+      "max": 1,
       "value": 2
     }
   },
-  "_embedded" : {
-     "_meta": {
-       "embedded_something": {
-         "max": 1
-         "value": 4
-       }
-     }
-   }
+  "_embedded": {
+    "_meta": {
+      "embedded_something": {
+        "options": [0, 1, 2],
+        "max": 1,
+        "value": 2
+      }
+    }
+  }
 }
 ```
 
-####  _src
-The reserved "_src" property is OPTIONAL.
+####  Link Objects
+If a value is a Hale *Link Object*, the client SHOULD dereference the associated resource and content-negotiate 
+media-types it understands, if the`type` attribute is not specified in the *Link Object*.
 
-Its value is a Hale Link Object.
-
-The client SHOULD dereference the associated resource and content-negotiate media-types it understands, if `type` 
-attribute is not specified in the Link Object.
-
-Unless a "target" property is specified in the Link Object, the client SHOULD completely fill in any attributes of the 
-Reference Object with those of the resource with the caveat that in the case of like attributes, the attribute of the 
-Resource Object supersedes that of the de-referenced resource. See Link Object ["target"]() for more information.
+Unless a "target" property is specified in the *Link Object*, the client SHOULD completely fill in any attributes of the 
+*Reference Object *with those of the return ed resource with the caveat that in the case of like attributes, 
+the attribute of the *Resource Object* supersedes that of the de-referenced resource. See *Link Object* 
+["target"](/README.md#target) property for more information.
 
 Example:
 
@@ -192,7 +330,7 @@ Example:
   "_meta": {
     "explosion": {
       "occupation": "swamp thing",
-      "_src": { "rel": "person", "href": "...", "method": "GET", "type": "application/json" }
+      "_ref": { "rel": "person", "href": "...", "method": "GET", "type": "application/json" }
     }
   }
 }
@@ -207,8 +345,7 @@ Content-Length: 273
 
 {
   "name": "Alex Olsen",
-  "occupation": "Scientist",
-  "status": "human"
+  "occupation": "Scientist"
 }
 ```
 
@@ -223,9 +360,14 @@ Content-Length: 273
 }
 ```
 
-## Data Objects
-Hale Data Objects inherit from Hale Reference Objects and specify metadata and constraints associated with values that 
-can be set by a client in exercising a link. A Data Object has the following properties:
+##### boolean
+A boolean value is only applicable to a *Link Object* in a "\_links" tag. If `true` it indicates that the link SHOULD be
+immediately de-referenced by a client and appended to the "\_embedded" property using the same name as the "rel" of the
+*Link Object*.
+
+## *Data Objects*
+Hale *Data Objects* inherit from Hale *Reference Objects* and specify metadata and constraints associated with values 
+that can be set by a client in exercising a link. A *Data Object* has the following properties:
 
 ### Metadata Properties
 
@@ -405,8 +547,8 @@ link that describes the constraint. The other attributes must match the tags spe
 }
 ```
 
-## Link Objects
-Hale extends Link Objects to inherit from Hale Reference Objects and introduces the following new properties:
+## *Link Object*s
+Hale extends *Link Object*s to inherit from Hale *Reference Objects* and introduces the following new properties:
 
 ### method
 The "method" property is OPTIONAL.
@@ -414,7 +556,7 @@ The "method" property is OPTIONAL.
 It specifies the uniform-interface method (e.g. HTTP.GET) that fulfills the specified relationship.
 
 ### data
-The "inputs" property is OPTIONAL.
+The "data" property is OPTIONAL.
 
 Keyed by input name that matches a URI template variable or a body property, it specifies the Input Objects defining 
 the allowed vales in exercising a link. Valid values are a single Input Object or an array of Input Objects for the
@@ -426,17 +568,18 @@ Example:
 {
   "_links": {
     "update": {
-        "href": "...",
-        "data": {
-          "name": { "value": "Mike" },
-          "search" [   
-            { "value": yes, "scope": "body", "options": "yes,no" }, 
-            { "scope": "href" }
-        }
-        
+      "href": ".../{?search}",
+      "data": {
+        "name": { "value": "Mike" },
+        "search" [   
+          { "value": "yes", "scope": "body", "options": ["yes", "no"] }, 
+          { "scope": "href" }
+        ]
+      }
     }
   }
 }
+```
 
 ### enctype
 The "enctype" property is OPTIONAL.
@@ -456,7 +599,7 @@ The reserved "target" property is OPTIONAL.
 JSON then "target" should specify an JSONPATH [http://goessner.net/articles/JsonPath/], if it is XML it 
 should specify an XPATH [RFC 5261]. 
  
-The "target" property allows Reference Objects to be created from remote resources for use in generating "options" for 
+The "target" property allows *Reference Objects* to be created from remote resources for use in generating "options" for 
 input attributes.
 
 ## Authors
