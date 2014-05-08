@@ -1,505 +1,744 @@
-# HALe - Hypertext Application Language Extended
-====
+# *Hale* - Hypertext Application Language Extension
+
 ## Abstract
-This document specifies a proper extension to HAL as defined at
-http://tools.ietf.org/html/draft-kelly-json-hal-06
+This document specifies a proper extension to the 
+[Hypertext Application Language (HAL)](http://tools.ietf.org/html/draft-kelly-json-hal-06).
 
-As a proper extension every HAL document is intended to be a proper HALE document.
-HALE provides two extensions to HAL. Specifically it extends the definition of _link and adds a new reserved document keyword called _meta.
+As a proper extension, every HAL document is intended to be a proper *Hale* document and vice versa. *Hale* provides two 
+primary extensions to HAL. Specifically it extends the properties of HAL [*Link Objects*][] and adds a new reserved 
+document keyword called "_meta" that defines document [*Reference Objects*][]. 
 
-## Introduction
+## 1. Introduction
 
-There is an emergence of non-HTML HTTP applications ("Web APIs") which use hyperlinks to direct clients around their resources.
+There is an emergence of non-HTML HTTP applications ("Web APIs") which use hyperlinks to direct clients around their 
+resources.
 
-The JSON Hypertext Application Language Extended (HALE) is a standard which establishes conventions for expressing hypermedia documents with JSON [RFC4627].
+The JSON Hypertext Application Language Extension (*Hale*) is a standard which establishes conventions for expressing 
+hypermedia documents with JSON ([RFC4627](https://www.ietf.org/rfc/rfc4627)).
 
-HALE is a general purpose media type with which Web APIs can be developed. Clients of these APIs can interact with services by reference to their relation type and use the HALE document to fulfill those relationships in order to progress through the application.  
+*Hale* is a general purpose media type with which Web APIs can be developed. Clients of these APIs can interact with 
+services by reference to their relation type and use the *Hale* document to progress through the application.  
 
-HALE's conventions result in a uniform interface for serving and consuming hypermedia, enabling the creation of general-purpose libraries that can be re-used on any API utilizing HALE.
+*Hale's* conventions result in a uniform interface for serving and consuming hypermedia, enabling the creation of 
+general-purpose libraries that can be re-used on any API utilizing *Hale*.
 
-The primary design goals of HALE are completeness, generality and simplicity.  
-HALE can be applied to many different domains, and imposes the minimal amount of structure necessary to cover the key requirements of a hypermedia API.
+The primary design goals of *Hale* are completeness, generality, simplicity and machine-to-machine (M2M) friendliness, 
+the later being a primary motivator for the extension of HAL. 
+ 
+The base HAL media-type is purposefully light and requires referencing human-readable documentation or content 
+negotiation for machine-readable external service descriptor documents (e.g. WADL, RAML, etc.) to understand link 
+template values and their constraints, form-related attributes and their constraints, and to determine associated 
+uniform interface methods of the protocol expected for the link.
 
-## Requirements
+Instead of forcing APIs to externalize service descriptors that lend themselves to tight-coupling or M2M clients having
+to understand any arbitrary number of possible machine-readable, service descriptor formats, *Hale* inherently 
+includes features so that a M2M client only needs to understand the *Hale* media-type to late-bind and interact with an 
+API that implements these optional features. 
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
-"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
-document are to be interpreted as described in [RFC2119].
+*Hale* can be applied to many different domains, and imposes the minimal amount of structure necessary to cover the key 
+requirements of a hypermedia API.
 
-## HALE Documents
-A HALE Document uses the format described in [RFC4627] and has the media type "application/hale+json".
+## 2. Requirements
 
-Its root object MUST be a Resource Object.
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and 
+"OPTIONAL" in this document are to be interpreted as described in [RFC2119](https://www.ietf.org/rfc/rfc2119).
 
-For example:
-```
-   GET /orders/523 HTTP/1.1
-   Host: example.org
-   Accept: application/hale+json
+## 3. *Hale* Documents
+A *Hale* Document uses the format described in [RFC4627](https://www.ietf.org/rfc/rfc4627) and has the 
+media type "application/vnd.hale+json".
 
-   HTTP/1.1 200 OK
-   Content-Type: application/hale+json
-```
-```json
-   {
-     "_links": {
-       "self": { "href": "/orders/523" },
-       "warehouse": { "href": "/warehouse/56" },
-       "invoice": { "href": "/invoices/873" }
-     },
-     "currency": "USD",
-     "status": "shipped",
-     "total": 10.20
-   }
-```
+The following extensions to HAL and new functionality are detailed in the following sections:
 
-Here, we have a HAL document representing an order resource with the URI "/orders/523".  It has "warehouse" and "invoice" links, and its own state in the form of "currency", "status", and "total" properties.
+(1) Extends HAL [*Link Objects*][] to include the new properties "method", "data", "render", "enctype", and "target".
 
-_(to do: expand)_
+(2) Introduces *Hale* [*Data Objects*][] that specify metadata and constraints associated with values that can be set by
+clients for URI template variables and request body attributes. 
 
-## Resource Objects
-A Resource Object represents a resource.
+(3) Extends HAL [*Resource Objects*][] with a new reserved property "_meta" that defines *Hale* [*Reference Objects*][].
 
-It has three reserved properties:
+(4) Introduces *Hale* [*Reference Objects*][] that include a single reserved property "_ref" for flexible re-usablility
+ of metadata associated with a [*Resource Object*][] and extends [*Link Objects*][] and [*Data Objects*] to inherit
+ from [*Reference Objects*][].
 
-1. "_meta": contains information about the resource or resource elements which are not themselves resource attributes.
-2. "_links": contains information about relationships with other resources
-3. "_embedded": contains an embedded resource which must be a valid HALE document
-
-All other properties MUST be valid JSON, and represent the current state of the resource.
-
-### Reserved Properties
-
-### _meta
-The reserved "_meta" property is OPTIONAL.
-
-It is an object whose properties provide information about the resource or resource attributes.  
-The values must be a valid JSON object.
-Defining a _meta attribute automatically defines a document *Class* Object.
-
-### _links
-The reserved "_links" property is OPTIONAL.
-
-It is an object whose property names are link relation types (as defined by [RFC5988]) and values are either a Link Object or an array of Link Objects.  The subject resource of these links is the Resource Object of which the containing "_links" object is a property.
-
-### _embedded
-The reserved "_embedded" property is OPTIONAL
-
-It is an object whose property names are link relation types (as defined by [RFC5988]) and values are either a HALE Object or an array of HALE Objects.
-
-Embedded Resources MAY be a full, partial, or inconsistent version of the representation served from the target URI.
-
-## Class Objects
-A class object represents an arbitrary json document which MAY be referenced by other JSON keys inside a HALE document.
-A Class Objects reserves the properties _source and _target.
-
-### Class References
-When a _meta attribute defines a Class Object, all attributes defined for that class apply to any attribute that references that class.  A class reference starts with "className." and the what follows the "." is treated as that attribute name.
-
-For example
-
+Basic Example:
 ```json
 {
   "_meta": {
-    "data": {
-      "options": [0,1,2],
-      "value": 2
+    "any": { "json": "object" }
+  },
+  "_links": {
+    "self": { "href": "..." },
+    "search": { 
+      "href": ".../{?send_info}",
+      "templated": true,
+      "method": "GET",
+      "data": { 
+        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
       }
     },
-  "data.something": {
-    "max": 1,
-    "value": 0,
+    "agent": { "href": "/agent/1", "method": "GET", "render": "embed" },
+    "customer": [ 
+      { "href": "/customer/1", "method": "GET" }
+    ]
+  },
+  "_embedded": {
+    "customer": [
+      {
+        "_links": {
+          "self": { "href": "/customer/1", "method": "GET" },
+          "edit": { 
+            "href": ".../{?user_id}",
+            "method": "PUT",
+            "enctype": "application/json",
+            "render": "resource",
+            "data": {
+              "name": { "type": "string", "required": true },
+              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true },
+              "user_id": { "scope": "href", "required": true }
+            }
+          }
+        },
+        "name": "Tom",
+        "send_info": "yes"
+      }
+    ]   
   }
 }
+
 ```
 
-would be interpreted as
+would be interpreted by a client as:
 
 ```json
 {
   "_meta": {
-    "data": {
-      "options": [0,1,2],
-      "value": 2
+    "any": { "json": "object" }
+  },
+  "_links": {
+    "self": { "href": "..." },
+    "search": { 
+      "href": ".../{?send_info}",
+      "templated": true,
+      "method": "GET",
+      "data": { 
+        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
       }
     },
-  "something": {
-    "max": 1,
-    "value": 0,
-    "options": [0,1,2]
-  }
-}
-```
-
-The client should first evaluate any classes that exist in the top level of the document and apply the class attribute to any sub attribute anywhere in the document.  If _meta has been defined in an embedded resource, the _meta classes only apply to the attributes within that resource.  
-
-A class object also has the following properties:
-
-
-### Multiple Classes
-An object may reference multiple classes.  When evaluating these attributes first apply the top level class, then apply the next class, and so forth.
-
-E.g.
-```json
-{
-  "_meta": {
-    "data": {
-      "options": [0,1,2]
-      "value": 2
+    "agent": { "href": "/agent/1", "method": "GET", "render": "embed" },
+    "customer": [ 
+      { "href": "/customer/1", "method": "GET" }
+    ]
+  },
+  "_embedded": {
+    "agent": {
+      "_links": {
+        "self": { "href": "/agent/1", "method": "GET" }
       },
-    "data2": {
-      "options": [1,2,3]
-      }
+      "name": "Mike"
     },
-  "data.data2.something": {
-    "max": 1,
-    "value": 0,
+    "customer": [
+      {
+        "_links": {
+          "self": { "href": "/customer/1", "method": "GET" },
+          "edit": { 
+            "href": ".../{?user_id}",
+            "method": "PUT",
+            "enctype": "application/json",
+            "render": "resource",
+            "data": {
+              "name": { "type": "string", "required": true, "value": "Tom" },
+              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true, "value": "yes" },
+              "user_id": { "scope": "href", "required": true }
+            }
+          }
+        },
+        "name": "Tom",
+        "send_info": "yes"
+      }
+    ]   
   }
 }
 ```
 
-would be interpreted as
+For an advanced example, see the example for [*Reference Objects*][].
 
-```json
-{
-  "_meta": {
-    "data": {
-      "options": [0,1,2]
-      "value": 2
-      },
-    "data2": {
-      "widget": true,
-      "options": [1,2,3]
-      }
-    },
-  "something": {
-    "max": 1,
-    "value": 0,
-    "options": [1,2,3],
-    "widget": true
-  }
-}
-```
+## 4. Link Objects
+*Hale* extends HAL *Link Objects* to inherit from *Hale* [*Reference Objects*][] and introduces the following new 
+properties:
 
-### Mixing Classes and Curies
-Classes have a higher operator precedence than curies.  A client should apply all class dereferences before dereferencing curies.
-
-### _source
-_source tells the client that it needs to find more information from a remote resource.  The client is instructed to dereference that resource and fill in any class attributes with those specified.
-
-### _target
-_target specifies that the information from a _source target can be found in a specified location.  If the media format is JSON then target should specify an JSONPATH [http://goessner.net/articles/JsonPath/], if it is XML it should specify an XPATH [RFC 5261].  
-
-
-## Link Objects
-A Link Object represents a relationship from the containing resource to a URI, and the information necessary to fulfill that relationship.
-It has the following properties:
-
-### href
-The "href" property is REQUIRED.
-
-Its value is either a URI [RFC3986] or a URI Template [RFC6570].
-
-If the value is a URI Template then the Link Object SHOULD have a "templated" attribute whose value is true.
-
-### templated
-The "templated" property is OPTIONAL.
-
-Its value is boolean and SHOULD be true when the Link Object's "href" property is a URI Template.
-
-Its value SHOULD be considered false if it is undefined, or any other value than true.
-
-### type
-The "type" property is OPTIONAL.
-
-Its value is a string used as a hint to indicate the media type expected when dereferencing the target resource.
-
-### deprecation
-The "deprecation" property is OPTIONAL.
-
-Its presence indicates that the link is to be deprecated (i.e. removed) at a future date.  Its value is a URL that SHOULD provide further information about the deprecation.
-
-A client SHOULD provide some notification (for example, by logging a warning message) whenever it traverses over a link that has this property.  The notification SHOULD include the deprecation property's value so that a client maintainer can easily find information about the deprecation.
-
-### name
-The "name" property is OPTIONAL.
-
-Its value MAY be used as a secondary key for selecting Link Objects which share the same relation type.
-
-### profile
-The "profile" property is OPTIONAL.
-
-Its value is a string which is a URI that hints about the profile (as defined by [I-D.wilde-profile-link]) of the target resource.
-
-### title
-The "title" property is OPTIONAL.
-
-Its value is a string and is intended for labeling the link with a human-readable identifier (as defined by [RFC5988]).
-
-### hreflang
-The "hreflang" property is OPTIONAL.
-
-Its value is a string and is intended for indicating the language of the target resource (as defined by [RFC5988]).
-
-### method
+### 4.1. method
 The "method" property is OPTIONAL.
 
-It specifies the uniform-interface method (e.g. HTTP) method that fulfills the specified relationship.
+It specifies the uniform-interface method(s) (e.g. HTTP.GET) to use to excercise the link. Valid values a string or 
+array of strings.
 
-### parameters
-The "parameters" property is OPTIONAL.
+### 4.2. data
+The "data" property is OPTIONAL.
 
-It specifies Constraint Objects which apply to the URL Template variables. A parameters attribute implies that the specified URL is templated. A parameter attribute implies a constraint on a url parameter and should be included if there is a constraint.
+It is an object whose property names are those of associated URI template variables or a body properties and values
+are *Hale* [*Data Objects*]. It specifies information about valid data for exercising the link.
 
-(consider removing this and subbing templated)
+Example:
 
-### attributes
-The "attributes" property is OPTIONAL.
+```json
+{
+  "_links": {
+    "search": {
+      "href": ".../{?state}",
+      "data": {
+        "state": { "options": [ "AL", "...", "WY"], "in": true },
+      }
+    }
+  }
+}
+```
 
-It specifies Constraint Objects which apply to the Request body. Specifying attributes implies that the specified relationship requires a Request Body to be fulfilled.
+### 4.3. render
+The "render" property is OPTIONAL.
 
-### enctype
+The following values are accepted:
+
+* "embed" - Indicates the client SHOULD resolve the resource and append it to the "_embedded" object using the link
+relation name as the property. 
+    Servers MUST only use this directive for *safe, idempotent* links.
+
+* "resource" - Indicates the client should populate a response body with all the values of the related "*Resource 
+Object* prior to interacting with the related Link Object.  E.g., this directive allows a client to properly interact 
+with an HTTP.PUT method.
+    Servers SHOULD only use this directive for *unsafe* and *idempotent* requests.
+
+### 4.4. enctype
 The "enctype" property is OPTIONAL.
 
-May be a list or a string.  If it is a string the server only accepts requests of that mediatype.
-If it is a lite, the server will accept any of the mediatypes specified.
-Specifies the media type that should be used to make the request.
-Defaults to application/x-www-form-urlencoded
+Specifies the media type that should be used to make the request and MUST be a list or a string.  If it is a string the 
+server only accepts requests of that media-type. If it is a list, the server will accept any of the media-types 
+specified.
 
-## Constraint Objects
-A constraint object may specify a Default or Constraint Parameters.  
-If it specifies a Default it MUST be either a literal (Number or String), or a List.
-If it specifies Constraint Parameters it must be an object.
+Defaults to application/json.
 
-### Default
-A (string or number) specifies that the attribute is of that type, and is of that value currently or by default.
-A List specifies multiple values set for the same parameter, equivalent to a "name=John&name=Jane".
+### 4.5. target
 
-### Constraint Parameters
-A Constraint Objects has the following reserved properties.  Any other value will be considered a Validator Object.
+The reserved "target" property is OPTIONAL.
 
-#### description
-The "description" property is OPTIONAL.
+"target" specifies that the information the subset of associated resource to return.  If the "type" property is 
+JSON then "target" should specify an JSONPATH [http://goessner.net/articles/JsonPath/], if it is XML it 
+should specify an XPATH [RFC 5261]. 
+ 
+The "target" property allows [*Reference Objects*][] to be created from remote resources for use in 
+generating "options" for input attributes.
 
-Specifies a Human Readable Description.
+## 5. Data Objects
+*Hale* *Data Objects* inherit from *Hale* [*Reference Objects*][] and specify metadata and constraints associated with 
+values that can be set by a client in exercising a link. 
 
-#### type
+Example:
+
+```json
+{
+  "_links": {
+    "self": { "href": "...", "method": "GET" },
+    "search": {
+      "href": ".../{?search_term,state}",
+      "method": "GET",
+      "data": {
+        "state": { "options": ["AL", "...", "WY"], "multi": true }
+      }
+    },
+    "create": {
+      "href": ".../{?user}",
+      "method": "POST",
+      "enctype": "application/x-www-form-urlencoded",
+      "data": {
+        "user": { 
+          "scope": "href", 
+          "required": true 
+        },
+        "given_name": { 
+          "minlength": 4, 
+          "maxlength": 30, 
+          "required": true,
+          "profile": "http://alps.io/schema.org/Person#givenName" 
+        },
+        "family_name": { 
+          "type": "string", 
+          "profile": "http://alps.io/schema.org/Person#familyName" 
+        },
+        "email_address": { 
+          "type": "string:email", 
+          "required": true
+        },
+        "phone": { 
+          "type": "number:tel" 
+        },
+        "phone_ext": {
+          "min": 0,
+          "max": 6
+        }
+        "ssn": {
+          "pattern": "^(\d{3}-?\d{2}-?\d{4}|XXX-XX-XXXX)$"
+        },
+        "home": {
+          "type": "object",
+          "required": false,
+          "data": {
+            "address": { "type": "string" },
+            "city": { "type": "string" },
+            "state": { "options": [ "AL", "...", "WY"], "in": true },
+            "postal_code": { "type": "number" }
+          }
+        }
+      }
+    }
+  }   
+}
+```
+
+A *Data Object* has the following properties:
+
+### 5.1. Data Properties
+
+#### 5.1.1. type
 The "type" property is OPTIONAL.
 
-Specifies the expected parameter type.
+Specifies the expected type of the data. Servers MAY provide type information in the format:
+`primitive_type{:data_type}`, where the `primitive_type` is a down-cased JSON primitive and the `data_type` is OPTIONAL. 
+Clients should at least recognize `data_type` values associated with data-related  
+[HTML 5 "input" element](http://www.w3.org/html/wg/drafts/html/master/forms.html#the-input-element) control types.
 
-#### options
-The "options" property is OPTIONAL.
+Default value is "string" if unspecified.
 
-If options is specified it MUST be a list. Options specifies possible values.
+#### 5.1.2. data
+The "data" property is OPTIONAL.
 
-#### value
+Specifying a "data" property supports recursively defining data properties of objects as data values.
+
+#### 5.1.3. scope
+The "scope" property is OPTIONAL.
+
+Specifies the scope of the *Data Object*. Servers MAY specify "href" or "either".
+
+If a [*Link Object*][] is templated and no *Data Object* with a property for the template variable name exists, a client 
+should assume there are no constraints associated with the URI template variable.
+
+Specifying "href" indicates the object only applies to URI template variables. 
+
+Specifying the value "either" indicates the object applies to either a URI template variable of the same name and 
+that a body property SHOULD be supplied according to the properties of the object.
+
+If unspecified, the *Data Object* specifies information about property values to be submitted as part of the request 
+body.
+
+#### 5.1.4. profile
+The "profile" property is OPTIONAL.
+
+Its value is a string which is a URI that hints about the profile (as defined by [I-D.wilde-profile-link][]) of the 
+related resource.
+
+#### 5.1.5. value
 The "value" property is OPTIONAL.
 
-value - specifies the current or default value
+Specifies the current or default value.
 
-## Validator Objects
-A validator specifies a property of a Constraint Object that must be true in order to fulfill a relationship.
+### 5.2 Constraint Properties
 
-The following are all reserved validators.  Any other property will be considered a Validator Extension.
+#### 5.2.1. options
+The "options" property is OPTIONAL.
 
-### in
+If options is specified it MUST be a list. Options specifies possible for the associated data. The list can either be
+an array of "strings" or an array of JSON objects keyed by the value to be used (this may need to be a Reference
+Object) to specify more about what property to use).
+
+#### 5.2.2. in
 The "in" property is OPTIONAL.
 
-In is a boolean. If "in" is specified the Constraint Object must specify "options".  The constraint "in" specifies that the value of a request parameter or attribute MUST be within the specified set of "options" in order to fulfill the relationship.
+In is a boolean. If "in" is specified the *Data Object* must specify "options".  The constraint "in" 
+specifies that the value of a request parameter or attribute MUST be within the specified set of "options".
 
-### min
+#### 5.2.3. min
 The "min" property is OPTIONAL.
 
-The constraint 'min' specifies that the value of a request parameter is below a certain value. If the value is a string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
+The constraint 'min' specifies that the value of a request parameter is below a certain value. If the value is a 
+string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
 
-### max
+#### 5.2.4. minlength
+The "minlength" property is OPTIONAL.
+
+Specifies the minimum length of a string, the minimum number of items in a list, or the minimum number of digits in a 
+number.
+
+#### 5.2.5. max
 The "max" property is OPTIONAL.
 
-The constraint 'max' specifies that the value of a request parameter is above a certain value. If the value is a string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
+The constraint 'max' specifies that the value of a request parameter is above a certain value. If the value is a 
+string it specifies lexical order. If the value is a number it is treated as a numerical constraint.
 
-### maxlength
+#### 5.2.6. maxlength
 The "maxlength" property is OPTIONAL.
 
-Specifies the maximum length of a string, the maximum number of items in a list, or the maximum number of digits in a number.
+Specifies the maximum length of a string, the maximum number of items in a list, or the maximum number of digits in a 
+number.
 
-### pattern
+#### 5.2.7. pattern
 The "pattern" property is OPTIONAL.
 
 Pattern specifies the PCRE regular expression that a string must conform to.
 
-### multi
+#### 5.2.8. multi
 The "multi" property is OPTIONAL.
 
 Multi is a boolean that specifies whether or not more than one of an item is allowed.  (i.e. ?name=foo&name=bar)
 
-### required
+#### 5.2.9 required
 The "required" property is OPTIONAL.
 
-This object must be a boolean.  When a Constraint Object specifies the Required this attribute must be included in the request to fulfill the relationship.
+This object must be a boolean.  When a *Data Object" specifies the "required" as `true`, this attribute must be included 
+in the request.
 
-### constraint extensions
+### 5.3 Constraint Extensions
 
-Other attributes are considered constraint extensions. It may be an object or a reference. If it is a reference it must refer to something which conforms. Anything under a constrain extension MUST specify a profile tag giving a link that describes the constraint. The other attributes must match the tags specified in the profile.
+Other attributes are considered constraint extensions. It may be an object or a reference. If it is a reference it must 
+refer to something which conforms. Anything under a constrain extension MUST specify a profile tag giving a 
+link that describes the constraint. The other attributes must match the tags specified in the profile.
 
-## Example Document
+## 6. Resource Objects
+*Hale* adds an additional reserved property to HAL *Resource Objects*:
+
+"_meta": contains reference metadata about the resource.
+
+### 6.1. Reserved Properties
+
+#### 6.1.1 _meta
+The reserved "_meta" property is OPTIONAL.
+
+It is an object whose properties provide information about the resource or resource attributes. The values must be a 
+valid JSON object.
+
+Defining a "_meta" attribute automatically defines a [*Reference Object*][] for the related *Resource Object*.
+
+## 7. Reference Objects
+*Hale* introduces *Reference Objects* that represent arbitrary JSON documents which MAY be referenced by other 
+JSON objects inside a *Hale* document. All objects in a *Reference Object* are themselves *Reference Objects*. 
+
+The primary purpose of *Reference Objects* is to simply, yet flexibly, provide a way to DRY documents and extend other 
+*Hale* objects in meaningful and useful ways at runtime, effectively providing quasi-code-on-demand directives for
+*Hale* aware clients to dynamically configure themselves.
+
+It has one reserved property:
+
+"_ref": contains an ordered array of directives about de-referencing related objects and resources.
+
+Example:
 ```json
 {
-"_meta": {
-   "locations": {
-      "options": [
-         "location1",
-         "location2",
-         "location3",
-         "location4",
-         "location5",
-         "location6",
-         "location7",
-         "location8",
-         "location9",
-         "location10"
-      ]}
-   },
-"_links": {
-        "profile": {
-            "href": "http://alps.example.org/DRDs"
+  "_meta": {
+    "lookup": {
+       "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
+    },
+    "edit_form": {
+      "_ref": [ { "href": "/edit_form/1", "method": "GET", "type": "application/json" } ]
+    }
+  },
+  "_links": {
+    "self": { "href": "..." },
+    "search": { 
+      "href": ".../{?send_info}",
+      "templated": true,
+      "method": "GET",
+      "data": { "_ref": [ "lookup" ] }
+    },
+    "agent": { "href": "/agent/1", "method": "GET", "render": "embed" },
+    "customer": [ 
+      { "href": "/customer/1", "method": "GET" },
+      { "href": "/customer/2", "method": "GET" }
+    ]
+  },
+  "_embedded": {
+    "customer": [
+      {
+        "_links": {
+          "self": { "href": "/customer/1", "method": "GET" },
+          "edit": { "href": ".../{?user_id}", "_ref": [ "edit_form" ] }
         },
-        "create": {
-            "href": "http://deployment.example.org/drds{?create-drd}",
-            "templated": true,
-            "method": "POST",
-            "attributes": {
-               "status": {
-                  "required": true
-                  },
-               "kind": {
-                  "options": [
-                    "standard",
-                    "sentinel"
-                    ]
-                  "in": true
-                  }
-               "locations.location": {},
-               "form-destroyed": {
-                  "type": "Bool"
-                  },
-               "name" {
-                  "required": true,
-                  "maxlength": 50
-                  }
-               "leviathan_uuid": "",
-               "email": {
-                  "pattern": "^.+@.+$"
-                  }
-               }
-            },
-        "search": {
-            "href": "http://deployment.example.org/drds{?search_term}",
-            "templated": true
+        "name": "Tom",
+        "send_info": "yes"
+      },
+      {
+        "_links": {
+          "self": { "href": "/customer/2", "method": "GET" },
+          "edit": { "href": ".../{?user_id}", "_ref": [ "edit_form" ] }
         },
-        "help": {
-            "href": "http://documentation.example.org/Things/DRDs"
-        },
-        "self": {
-            "href": "http://deployment.example.org/drds"
-        },
-        "type": {
-            "href": "http://alps.example.org/DRDs#drds"
-        },
-        "items": [
-            {
-                "href": "http://deployment.example.org/drds/0",
-                "type": "http://alps.example.org/DRDs#drd"
-            },
-            {
-                "href": "http://deployment.example.org/drds/1",
-                "type": "http://alps.example.org/DRDs#drd"
+        "name": "Harry",
+        "send_info": "no"
+      }
+    ]   
+  }
+}
+
+```
+
+would be interpreted by a client as:
+
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 273
+Expires: Mon, 01 Jan 2525 00:00:00 GMT
+ETag: "3e86-410-3596fbbc"
+
+{
+  "method": "PUT",
+  "enctype": "application/json",
+  "render": "resource",
+  "data": {
+    "name": { "type": "string", "required": true },
+    "user_id": { "scope": "href", "required": true },
+    "_ref": [ "lookup" ]
+  }
+}
+```
+
+```json
+{
+  "_meta": {
+    "lookup": {
+      "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
+    },
+    "edit_form": {
+      "method": "PUT",
+      "enctype": "application/json",
+      "render": "resource",
+      "data": {
+        "name": { "type": "string", "required": true },
+        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true },
+        "user_id": { "scope": "href", "required": true }
+      }
+    }
+  },
+  "_links": {
+    "self": { "href": "..." },
+    "search": { 
+      "href": ".../{?send_info}",
+      "templated": true,
+      "method": "GET",
+      "data": { 
+        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
+      }
+    },
+    "agent": { "href": "/agent/1", "method": "GET", "render": "embed" },
+    "customer": [ 
+      { "href": "/customer/1", "method": "GET" },
+      { "href": "/customer/2", "method": "GET" }
+    ]
+  },
+  "_embedded": {
+    "agent": {
+      "_links": {
+        "self": { "href": "/agent/1", "method": "GET" }
+      },
+      "name": "Mike"
+    },
+    "customer": [
+      {
+        "_links": {
+          "self": { "href": "/customer/1", "method": "GET" },
+          "edit": { 
+            "href": ".../{?user_id}",
+            "method": "PUT",
+            "enctype": "application/json",
+            "render": "resource",
+            "data": {
+              "name": { "type": "string", "required": true, "value": "Tom" },
+              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true, "value": "yes" },
+              "user_id": { "scope": "href", "required": true }
             }
-        ]   
+          }
+        },
+        "name": "Tom",
+        "send_info": "yes"
+      },
+      {
+        "_links": {
+          "self": { "href": "/customer/2", "method": "GET" },
+          "edit": { 
+            "href": ".../{?user_id}",
+            "method": "PUT",
+            "enctype": "application/json",
+            "render": "resource",
+            "data": {
+              "name": { "type": "string", "required": true, "value": "Harry" },
+              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true, "value": "no" },
+              "user_id": { "scope": "href", "required": true }
+            }
+          }
+        },
+        "name": "Harry",
+        "send_info": "no"
+      }
+    ]   
+  }
+}
 ```
 
-## Media Type Parameters
+### 7.1. Reserved Properties
 
-### profile
+#### 7.1.1. _ref
+The reserved "_ref" property is OPTIONAL.
 
-The media type identifier application/hale+json MAY also include an additional "profile" parameter (as defined by [I-D.wilde-profile-link])
+Valid values are an array of:
 
-HALE documents that are served with the "profile" parameter still SHOULD include a "profile" relationship belonging to the root resource.
+(1) strings corresponding to properties of a particular *Reference Object* in a [*Resource Object*][] "_meta" tag.
 
-## Recommendations
-### Self Link
-Each Resource Object SHOULD contain a 'self' link that corresponds with the IANA registered 'self' relation (as defined by [RFC5988]) whose target is the resource's URI.
+(2) [*Link Objects*][] that should be de-referenced and it's attributes appended to the attributes
+of the associated *Reference Objects*
 
-### Link Relations
-Custom link relation types (Extension Relation Types in [RFC5988]) SHOULD be URIs that when dereferenced in a web browser provide relevant documentation, in the form of an HTML page, about the meaning and/or behavior of the target Resource.  This will improve the discoverability of the API.
+A client SHOULD resolve all "_ref" declarations when encountered in a document according to the order of the array. 
 
-The CURIE Syntax [W3C.NOTE-curie-20101216] or Document Classes MAY be used for brevity for these URIs.  CURIEs are established within a HALE document via a set of Link Objects with the relation type "curies" on the root Resource Object. Classes are established within a HALE document via the _meta property. 
-These links contain a URI Template with the token 'rel', and are named via the "name" property.
+A client MUST resolve a "\_ref" chain hierarchically starting at the top-level in the nearest "\_meta" tag of the 
+current [*Resource Object*][]. Given the recursive structure of HAL, if the particular value is not discovered in the 
+current [*Resource Object*][], the client SHOULD look in a [*Resource Object*][] embedding the current 
+[*Resource Object*][], if any.
+
+The inheritance hierarchy for common *Reference Objects* attributes is the value of the de-referencing 
+*Reference Objects* supersedes those in the objects referenced.  
+
+If a client cannot resolve the "_ref" attribute, it SHOULD treat it as a literal value.
+
+##### 7.1.1.1. String values
+A string value indicates the name of a Reference object property in a "_meta" tag in the current 
+[*Resource Object*][] or another [*Resource Object*][] embedding the current resource 
+object.
+
+Example:
+
 ```json
-   {
-     "_links": {
-       "self": { "href": "/orders" },
-       "curies": [{
-         "name": "acme",
-         "href": "http://docs.acme.com/relations/{rel}",
-         "templated": true
-       }],
-       "acme:widgets": { "href": "/widgets" }
-     }
-   }
+{
+  "_meta": {
+    "data": {
+      "options": [0, 1, 2],
+      "value": 0
+    },
+    "data1": {
+      "_ref": ["data"],
+      "value": 1
+    },
+    "something": {
+      "max": 1,
+      "value": 2
+    },
+    "something_else": {
+      "_ref": ["data1", "something"]
+    },
+    "_embedded" : {
+      "_meta": {
+        "embedded_something": {
+          "_ref": ["something_else"]
+        }
+      }
+    }
+  }
+}
 ```
 
-The above demonstrates the relation "http://docs.acme.com/relations/widgets" being abbreviated to "acme:widgets" via CURIE syntax.
+would be interpreted as:
 
-### Hypertext Cache Pattern
-
-The "hypertext cache pattern" allows servers to use embedded resources to dynamically reduce the number of requests a client
- makes, improving the efficiency and performance of the application.
-
-Clients MAY be automated for this purpose so that, for any given link relation, they will read from an embedded resource (if present) in preference to traversing a link.
-
-To activate this client behavior for a given link, servers SHOULD add an embedded resource into the representation with the same relation.
-
-Servers SHOULD NOT entirely "swap out" a link for an embedded resource (or vice versa) because client support for this technique is OPTIONAL.
-
-The following examples shows the hypertext cache pattern applied to an "author" link:
-Before:
 ```json
-   {
-     "_links": {
-       "self": { "href": "/books/the-way-of-zen" },
-       "author": { "href": "/people/alan-watts" }
-     }
-   }
+{
+  "_meta": {
+    "data": {
+      "options": [0, 1, 2],
+      "value": 0
+    },
+    "data1": {
+      "options": [0, 1, 2],
+      "value": 1
+    },
+    "something": {
+      "max": 1,
+      "value": 2
+    },
+    "something_else": {
+      "options": [0, 1, 2],
+      "max": 1,
+      "value": 2
+    }
+  },
+  "_embedded": {
+    "_meta": {
+      "embedded_something": {
+        "options": [0, 1, 2],
+        "max": 1,
+        "value": 2
+      }
+    }
+  }
+}
 ```
 
+##### 7.1.1.2.  Link Object values
+If a value is a *Hale* [*Link Object*][], the client SHOULD dereference the associated resource and content-negotiate 
+media-types it understands, if a`type` attribute is not specified in the [*Link Object*][].
 
-   After:
+Unless a "target" property is specified in the [*Link Object*][], the client SHOULD completely fill in any 
+attributes of the *Reference Object *with those of the return ed resource with the caveat that in the case of like 
+attributes, the attribute of the [*Resource Object*][] supersedes that of the de-referenced resource. 
+
+See [*Link Object*][] ["target"](#45-target) property for more information.
+
+Example:
+
 ```json
-   {
-     "_links": {
-       "self": { "href": "/blog-post" },
-       "author": { "href": "/people/alan-watts" }
-     },
-     "_embedded": {
-       "author": {
-         "_links": { "self": { "href": "/people/alan-watts" } },
-         "name": "Alan Watts",
-         "born": "January 6, 1915",
-         "died": "November 16, 1973"
-       }
-     }
-   }
+{
+  "_meta": {
+    "monster" {
+      "demeanor": "scary"
+    },
+    "explosion": {
+      "occupation": "swamp thing",
+      "_ref": [ { "href": "/human/1", "method": "GET", "type": "application/json" }, "monster" ]
+    }
+  }
+}
 ```
 
-## Security Considerations
-...
+would be interpreted as:
 
-## IANA Considerations
-...
+```
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 273
 
-## Appendix
-### Acknowledgements
-M. Kelly
+{
+  "name": "Alex Olsen",
+  "occupation": "Scientist",
+  "demeanor": "friendly"
+}
+```
 
-### Frequently Asked Questions
+```json
+{
+  "_meta": {
+    "monster" {
+      "demeanor": "scary"
+    },
+    "explosion": {
+      "name": "Alex Olsen",
+      "occupation": "Swamp Thing",
+      "demeanor": "scary"
+    }
+  }
+}
+```
+
+## 8. Authors
+
+[Shea Valentine](https://github.com/sheavalentine-mdsol) and [Mark W. Foster](https://github.com/fosdev)
+
+[*Data Objects*]: #7-data-objects
+[*Data Object*]: #7-data-objects
+[*Link Objects*]: #6-link-objects
+[*Link Object*]: #6-link-objects
+[*Reference Object*]: #5-reference-objects
+[*Reference Objects*]: #5-reference-objects
+[*Resource Object*]: #4-resource-objects
+[*Resource Objects*]: #4-resource-objects
+[I-D.wilde-profile-link]: http://tools.ietf.org/html/draft-wilde-profile-link-04
