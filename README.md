@@ -263,6 +263,22 @@ Example:
           "type": "string", 
           "profile": "http://alps.io/schema.org/Person#familyName" 
         },
+        "parents": {
+          "type": "array",
+          "profile": "http://alps.io/schema.org/Person",
+          "data": {
+            "given_name": { 
+              "minlength": 4, 
+              "maxlength": 30, 
+              "required": true,
+              "profile": "http://alps.io/schema.org/Person#givenName" 
+            },
+            "family_name": { 
+              "type": "string", 
+              "profile": "http://alps.io/schema.org/Person#familyName" 
+            },            
+          }
+        },
         "email_address": { 
           "type": "string:email", 
           "required": true
@@ -273,7 +289,7 @@ Example:
         "phone_ext": {
           "min": 0,
           "max": 6
-        }
+        },
         "ssn": {
           "pattern": "^(\d{3}-?\d{2}-?\d{4}|XXX-XX-XXXX)$"
         },
