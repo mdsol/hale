@@ -49,7 +49,7 @@ media type "application/vnd.hale+json".
 
 The following extensions to HAL and new functionality are detailed in the following sections:
 
-(1) Extends HAL [*Link Objects*][] to include the new properties "method", "data", "render", "enctype", and "target".
+(1) Extends HAL [*Link Objects*][] to include the new properties "method", "data", "render", "request_encoding", "enctype", and "target".
 
 (2) Introduces *Hale* [*Data Objects*][] that specify metadata and constraints associated with values that can be set by
 clients for URI template variables and request body attributes. 
@@ -63,46 +63,80 @@ clients for URI template variables and request body attributes.
 Basic Example:
 ```json
 {
-  "_meta": {
-    "any": { "json": "object" }
-  },
-  "_links": {
-    "self": { "href": "..." },
-    "search": { 
-      "href": ".../{?send_info}",
-      "templated": true,
-      "method": "GET",
-      "data": { 
-        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
-      }
+    "_meta": {
+        "any": {
+            "json": "object"
+        }
     },
-    "agent": { "href": "/agent/1", "method": "GET", "render": "embed" },
-    "customer": [ 
-      { "href": "/customer/1", "method": "GET" }
-    ]
-  },
-  "_embedded": {
-    "customer": [
-      {
-        "_links": {
-          "self": { "href": "/customer/1", "method": "GET" },
-          "edit": { 
-            "href": ".../{?user_id}",
-            "method": "PUT",
-            "enctype": "application/json",
-            "render": "resource",
-            "data": {
-              "name": { "type": "string", "required": true },
-              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true },
-              "user_id": { "scope": "href", "required": true }
-            }
-          }
+    "_links": {
+        "self": {
+            "href": "..."
         },
-        "name": "Tom",
-        "send_info": "yes"
-      }
-    ]   
-  }
+        "search": {
+            "href": ".../{?send_info}",
+            "templated": true,
+            "method": "GET",
+            "data": {
+                "send_info": {
+                    "options": [
+                        "yes",
+                        "no",
+                        "maybe"
+                    ],
+                    "in": true
+                }
+            }
+        },
+        "agent": {
+            "href": "/agent/1",
+            "method": "GET",
+            "render": "embed"
+        },
+        "customer": [
+            {
+                "href": "/customer/1",
+                "method": "GET"
+            }
+        ]
+    },
+    "_embedded": {
+        "customer": [
+            {
+                "_links": {
+                    "self": {
+                        "href": "/customer/1",
+                        "method": "GET"
+                    },
+                    "edit": {
+                        "href": ".../{?user_id}",
+                        "method": "PUT",
+                        "request_encoding": "application/json",
+                        "render": "resource",
+                        "data": {
+                            "name": {
+                                "type": "string",
+                                "required": true
+                            },
+                            "send_info": {
+                                "options": [
+                                    "yes",
+                                    "no",
+                                    "maybe"
+                                ],
+                                "in": true
+                            },
+                            "user_id": {
+                                "scope": "href",
+                                "required": true
+                            }
+                        }
+                    }
+                },
+                "name": "Tom",
+                "send_info": "yes"
+            }
+        ]
+    }
 }
 
 ```
@@ -111,52 +145,91 @@ would be interpreted by a client as:
 
 ```json
 {
-  "_meta": {
-    "any": { "json": "object" }
-  },
-  "_links": {
-    "self": { "href": "..." },
-    "search": { 
-      "href": ".../{?send_info}",
-      "templated": true,
-      "method": "GET",
-      "data": { 
-        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
-      }
+    "_meta": {
+        "any": {
+            "json": "object"
+        }
     },
-    "agent": { "href": "/agent/1", "method": "GET", "render": "embed" },
-    "customer": [ 
-      { "href": "/customer/1", "method": "GET" }
-    ]
-  },
-  "_embedded": {
-    "agent": {
-      "_links": {
-        "self": { "href": "/agent/1", "method": "GET" }
-      },
-      "name": "Mike"
-    },
-    "customer": [
-      {
-        "_links": {
-          "self": { "href": "/customer/1", "method": "GET" },
-          "edit": { 
-            "href": ".../{?user_id}",
-            "method": "PUT",
-            "enctype": "application/json",
-            "render": "resource",
-            "data": {
-              "name": { "type": "string", "required": true, "value": "Tom" },
-              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true, "value": "yes" },
-              "user_id": { "scope": "href", "required": true }
-            }
-          }
+    "_links": {
+        "self": {
+            "href": "..."
         },
-        "name": "Tom",
-        "send_info": "yes"
-      }
-    ]   
-  }
+        "search": {
+            "href": ".../{?send_info}",
+            "templated": true,
+            "method": "GET",
+            "data": {
+                "send_info": {
+                    "options": [
+                        "yes",
+                        "no",
+                        "maybe"
+                    ],
+                    "in": true
+                }
+            }
+        },
+        "agent": {
+            "href": "/agent/1",
+            "method": "GET",
+            "render": "embed"
+        },
+        "customer": [
+            {
+                "href": "/customer/1",
+                "method": "GET"
+            }
+        ]
+    },
+    "_embedded": {
+        "agent": {
+            "_links": {
+                "self": {
+                    "href": "/agent/1",
+                    "method": "GET"
+                }
+            },
+            "name": "Mike"
+        },
+        "customer": [
+            {
+                "_links": {
+                    "self": {
+                        "href": "/customer/1",
+                        "method": "GET"
+                    },
+                    "edit": {
+                        "href": ".../{?user_id}",
+                        "method": "PUT",
+                        "request_encoding": "application/json",
+                        "render": "resource",
+                        "data": {
+                            "name": {
+                                "type": "string",
+                                "required": true,
+                                "value": "Tom"
+                            },
+                            "send_info": {
+                                "options": [
+                                    "yes",
+                                    "no",
+                                    "maybe"
+                                ],
+                                "in": true,
+                                "value": "yes"
+                            },
+                            "user_id": {
+                                "scope": "href",
+                                "required": true
+                            }
+                        }
+                    }
+                },
+                "name": "Tom",
+                "send_info": "yes"
+            }
+        ]
+    }
 }
 ```
 
@@ -182,29 +255,43 @@ Example:
 
 ```json
 {
-  "_links": {
-    "search": {
-      "href": ".../{?state}",
-      "data": {
-        "state": { "options": [ "AL", "...", "WY"], "in": true },
-      }
+    "_links": {
+        "search": {
+            "href": ".../{?state}",
+            "data": {
+                "state": {
+                    "options": [
+                        "AL",
+                        "...",
+                        "WY"
+                    ],
+                    "in": true
+                }
+            }
+        }
     }
-  }
 }
 ```
 
 ### 4.3. render
 The "render" property is OPTIONAL.
 
+"render" specifies to a client how to treat the link relationship.  The default is "follow".
+
 The following values are accepted:
+
+* "follow" instructs the client that it should anticipate a state change.  If the link is *safe*, then it should
+anticipate arriving at a new resource.  If the link is *unsafe* or *idempotent* then it should anticipate the 
+specified change.
 
 * "embed" - Indicates the client SHOULD resolve the resource and append it to the "_embedded" object using the link
 relation name as the property. 
     Servers MUST only use this directive for *safe, idempotent* links.
 
-* "resource" - Indicates the client should populate a response body with all the values of the related "*Resource 
-Object* prior to interacting with the related Link Object.  E.g., this directive allows a client to properly interact 
-with an HTTP.PUT method.
+* "resource" - Indicates the client should populate the data object with the elements of the linked resource and
+fill the "value" attributes if they aren't already specified with the values of the objects data elements.  
+The client should do this prior to interacting with the related Link Object.  
+E.g., this directive allows a client to properly interact with an HTTP.PUT method.
     Servers SHOULD only use this directive for *unsafe* and *idempotent* requests.
 
 ### 4.4. enctype
@@ -214,7 +301,7 @@ Specifies the media type that should be used to make the request and MUST be a l
 server only accepts requests of that media-type. If it is a list, the server will accept any of the media-types 
 specified.
 
-Defaults to application/json.
+Defaults to the current encoding, e.g. application/hale+json
 
 ### 4.5. target
 
@@ -227,6 +314,14 @@ should specify an XPATH [RFC 5261].
 The "target" property allows [*Reference Objects*][] to be created from remote resources for use in 
 generating "options" for input attributes.
 
+### 4.6. request_encoding
+The reserved "request_encoding" propoerty is OPTIONAL.
+
+Specifies the media type of the body of a request. If it is a string the server only accepts request bodies of that 
+media-type. If it is a list, the server will accept any of the media-types specified.
+
+Defaults to application/x-www-form-urlencoded
+
 ## 5. Data Objects
 *Hale* *Data Objects* inherit from *Hale* [*Reference Objects*][] and specify metadata and constraints associated with 
 values that can be set by a client in exercising a link. 
@@ -235,77 +330,100 @@ Example:
 
 ```json
 {
-  "_links": {
-    "self": { "href": "...", "method": "GET" },
-    "search": {
-      "href": ".../{?search_term,state}",
-      "method": "GET",
-      "data": {
-        "state": { "options": ["AL", "...", "WY"], "multi": true }
-      }
-    },
-    "create": {
-      "href": ".../{?user}",
-      "method": "POST",
-      "enctype": "application/x-www-form-urlencoded",
-      "data": {
-        "user": { 
-          "scope": "href", 
-          "required": true 
+    "_links": {
+        "self": {
+            "href": "...",
+            "method": "GET"
         },
-        "given_name": { 
-          "minlength": 4, 
-          "maxlength": 30, 
-          "required": true,
-          "profile": "http://alps.io/schema.org/Person#givenName" 
+        "search": {
+            "href": ".../{?search_term,state}",
+            "method": "GET",
+            "data": {
+                "state": {
+                    "options": [
+                        "AL",
+                        "...",
+                        "WY"
+                    ],
+                    "multi": true
+                }
+            }
         },
-        "family_name": { 
-          "type": "string", 
-          "profile": "http://alps.io/schema.org/Person#familyName" 
-        },
-        "parents": {
-          "type": "array",
-          "profile": "http://alps.io/schema.org/Person",
-          "data": {
-            "given_name": { 
-              "minlength": 4, 
-              "maxlength": 30, 
-              "required": true,
-              "profile": "http://alps.io/schema.org/Person#givenName" 
-            },
-            "family_name": { 
-              "type": "string", 
-              "profile": "http://alps.io/schema.org/Person#familyName" 
-            },            
-          }
-        },
-        "email_address": { 
-          "type": "string:email", 
-          "required": true
-        },
-        "phone": { 
-          "type": "number:tel" 
-        },
-        "phone_ext": {
-          "min": 0,
-          "max": 6
-        },
-        "ssn": {
-          "pattern": "^(\d{3}-?\d{2}-?\d{4}|XXX-XX-XXXX)$"
-        },
-        "home": {
-          "type": "object",
-          "required": false,
-          "data": {
-            "address": { "type": "string" },
-            "city": { "type": "string" },
-            "state": { "options": [ "AL", "...", "WY"], "in": true },
-            "postal_code": { "type": "number" }
-          }
+        "create": {
+            "href": ".../{?user}",
+            "method": "POST",
+            "request_encoding": "application/x-www-form-urlencoded",
+            "data": {
+                "user": {
+                    "scope": "href",
+                    "required": true
+                },
+                "given_name": {
+                    "minlength": 4,
+                    "maxlength": 30,
+                    "required": true,
+                    "profile": "http://alps.io/schema.org/Person#givenName"
+                },
+                "family_name": {
+                    "type": "string",
+                    "profile": "http://alps.io/schema.org/Person#familyName"
+                },
+                "parents": {
+                    "type": "array",
+                    "profile": "http://alps.io/schema.org/Person",
+                    "data": {
+                        "given_name": {
+                            "minlength": 4,
+                            "maxlength": 30,
+                            "required": true,
+                            "profile": "http://alps.io/schema.org/Person#givenName"
+                        },
+                        "family_name": {
+                            "type": "string",
+                            "profile": "http://alps.io/schema.org/Person#familyName"
+                        }
+                    }
+                },
+                "email_address": {
+                    "type": "string:email",
+                    "required": true
+                },
+                "phone": {
+                    "type": "number:tel"
+                },
+                "phone_ext": {
+                    "min": 0,
+                    "max": 6
+                },
+                "ssn": {
+                    "pattern": "^(\\d{3}-?\\d{2}-?\\d{4}|XXX-XX-XXXX)$"
+                },
+                "home": {
+                    "type": "object",
+                    "required": false,
+                    "data": {
+                        "address": {
+                            "type": "string"
+                        },
+                        "city": {
+                            "type": "string"
+                        },
+                        "state": {
+                            "options": [
+                                "AL",
+                                "...",
+                                "WY"
+                            ],
+                            "in": true
+                        },
+                        "postal_code": {
+                            "type": "number"
+                        }
+                    }
+                }
+            }
         }
-      }
     }
-  }   
 }
 ```
 
@@ -360,9 +478,9 @@ Specifies the current or default value.
 #### 5.2.1. options
 The "options" property is OPTIONAL.
 
-If options is specified it MUST be a list. Options specifies possible for the associated data. The list can either be
-an array of "strings" or an array of JSON objects keyed by the value to be used (this may need to be a Reference
-Object) to specify more about what property to use).
+If options is specified it MUST be an array. Options specifies possible for the associated data. 
+The array can either be an array of objects matching the Data's 'type' property, or an array of JSON objects keyed 
+by the value to be used (this may need to be a Reference Object) to specify more about what property to use).
 
 #### 5.2.2. in
 The "in" property is OPTIONAL.
@@ -446,50 +564,94 @@ It has one reserved property:
 Example:
 ```json
 {
-  "_meta": {
-    "lookup": {
-       "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
+    "_meta": {
+        "lookup": {
+            "send_info": {
+                "options": [
+                    "yes",
+                    "no",
+                    "maybe"
+                ],
+                "in": true
+            }
+        },
+        "edit_form": {
+            "_ref": [
+                {
+                    "href": "/edit_form/1",
+                    "method": "GET",
+                    "type": "application/json"
+                }
+            ]
+        }
     },
-    "edit_form": {
-      "_ref": [ { "href": "/edit_form/1", "method": "GET", "type": "application/json" } ]
+    "_links": {
+        "self": {
+            "href": "..."
+        },
+        "search": {
+            "href": ".../{?send_info}",
+            "templated": true,
+            "method": "GET",
+            "data": {
+                "_ref": [
+                    "lookup"
+                ]
+            }
+        },
+        "agent": {
+            "href": "/agent/1",
+            "method": "GET",
+            "render": "embed"
+        },
+        "customer": [
+            {
+                "href": "/customer/1",
+                "method": "GET"
+            },
+            {
+                "href": "/customer/2",
+                "method": "GET"
+            }
+        ]
+    },
+    "_embedded": {
+        "customer": [
+            {
+                "_links": {
+                    "self": {
+                        "href": "/customer/1",
+                        "method": "GET"
+                    },
+                    "edit": {
+                        "href": ".../{?user_id}",
+                        "_ref": [
+                            "edit_form"
+                        ]
+                    }
+                },
+                "name": "Tom",
+                "send_info": "yes"
+            },
+            {
+                "_links": {
+                    "self": {
+                        "href": "/customer/2",
+                        "method": "GET"
+                    },
+                    "edit": {
+                        "href": ".../{?user_id}",
+                        "_ref": [
+                            "edit_form"
+                        ]
+                    }
+                },
+                "name": "Harry",
+                "send_info": "no"
+            }
+        ]
     }
-  },
-  "_links": {
-    "self": { "href": "..." },
-    "search": { 
-      "href": ".../{?send_info}",
-      "templated": true,
-      "method": "GET",
-      "data": { "_ref": [ "lookup" ] }
-    },
-    "agent": { "href": "/agent/1", "method": "GET", "render": "embed" },
-    "customer": [ 
-      { "href": "/customer/1", "method": "GET" },
-      { "href": "/customer/2", "method": "GET" }
-    ]
-  },
-  "_embedded": {
-    "customer": [
-      {
-        "_links": {
-          "self": { "href": "/customer/1", "method": "GET" },
-          "edit": { "href": ".../{?user_id}", "_ref": [ "edit_form" ] }
-        },
-        "name": "Tom",
-        "send_info": "yes"
-      },
-      {
-        "_links": {
-          "self": { "href": "/customer/2", "method": "GET" },
-          "edit": { "href": ".../{?user_id}", "_ref": [ "edit_form" ] }
-        },
-        "name": "Harry",
-        "send_info": "no"
-      }
-    ]   
-  }
 }
-
 ```
 
 would be interpreted by a client as:
@@ -502,96 +664,182 @@ Expires: Mon, 01 Jan 2525 00:00:00 GMT
 ETag: "3e86-410-3596fbbc"
 
 {
-  "method": "PUT",
-  "enctype": "application/json",
-  "render": "resource",
-  "data": {
-    "name": { "type": "string", "required": true },
-    "user_id": { "scope": "href", "required": true },
-    "_ref": [ "lookup" ]
-  }
+    "method": "PUT",
+    "request_encoding": "application/json",
+    "render": "resource",
+    "data": {
+        "name": {
+            "type": "string",
+            "required": true
+        },
+        "user_id": {
+            "scope": "href",
+            "required": true
+        },
+        "_ref": [
+            "lookup"
+        ]
+    }
 }
 ```
 
 ```json
 {
-  "_meta": {
-    "lookup": {
-      "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
+    "_meta": {
+        "lookup": {
+            "send_info": {
+                "options": [
+                    "yes",
+                    "no",
+                    "maybe"
+                ],
+                "in": true
+            }
+        },
+        "edit_form": {
+            "method": "PUT",
+            "request_encoding": "application/json",
+            "render": "resource",
+            "data": {
+                "name": {
+                    "type": "string",
+                    "required": true
+                },
+                "send_info": {
+                    "options": [
+                        "yes",
+                        "no",
+                        "maybe"
+                    ],
+                    "in": true
+                },
+                "user_id": {
+                    "scope": "href",
+                    "required": true
+                }
+            }
+        }
     },
-    "edit_form": {
-      "method": "PUT",
-      "enctype": "application/json",
-      "render": "resource",
-      "data": {
-        "name": { "type": "string", "required": true },
-        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true },
-        "user_id": { "scope": "href", "required": true }
-      }
+    "_links": {
+        "self": {
+            "href": "..."
+        },
+        "search": {
+            "href": ".../{?send_info}",
+            "templated": true,
+            "method": "GET",
+            "data": {
+                "send_info": {
+                    "options": [
+                        "yes",
+                        "no",
+                        "maybe"
+                    ],
+                    "in": true
+                }
+            }
+        },
+        "agent": {
+            "href": "/agent/1",
+            "method": "GET",
+            "render": "embed"
+        },
+        "customer": [
+            {
+                "href": "/customer/1",
+                "method": "GET"
+            },
+            {
+                "href": "/customer/2",
+                "method": "GET"
+            }
+        ]
+    },
+    "_embedded": {
+        "agent": {
+            "_links": {
+                "self": {
+                    "href": "/agent/1",
+                    "method": "GET"
+                }
+            },
+            "name": "Mike"
+        },
+        "customer": [
+            {
+                "_links": {
+                    "self": {
+                        "href": "/customer/1",
+                        "method": "GET"
+                    },
+                    "edit": {
+                        "href": ".../{?user_id}",
+                        "method": "PUT",
+                        "request_encoding": "application/json",
+                        "render": "resource",
+                        "data": {
+                            "name": {
+                                "type": "string",
+                                "required": true,
+                                "value": "Tom"
+                            },
+                            "send_info": {
+                                "options": [
+                                    "yes",
+                                    "no",
+                                    "maybe"
+                                ],
+                                "in": true,
+                                "value": "yes"
+                            },
+                            "user_id": {
+                                "scope": "href",
+                                "required": true
+                            }
+                        }
+                    }
+                },
+                "name": "Tom",
+                "send_info": "yes"
+            },
+            {
+                "_links": {
+                    "self": {
+                        "href": "/customer/2",
+                        "method": "GET"
+                    },
+                    "edit": {
+                        "href": ".../{?user_id}",
+                        "method": "PUT",
+                        "request_encoding": "application/json",
+                        "render": "resource",
+                        "data": {
+                            "name": {
+                                "type": "string",
+                                "required": true,
+                                "value": "Harry"
+                            },
+                            "send_info": {
+                                "options": [
+                                    "yes",
+                                    "no",
+                                    "maybe"
+                                ],
+                                "in": true,
+                                "value": "no"
+                            },
+                            "user_id": {
+                                "scope": "href",
+                                "required": true
+                            }
+                        }
+                    }
+                },
+                "name": "Harry",
+                "send_info": "no"
+            }
+        ]
     }
-  },
-  "_links": {
-    "self": { "href": "..." },
-    "search": { 
-      "href": ".../{?send_info}",
-      "templated": true,
-      "method": "GET",
-      "data": { 
-        "send_info": { "options": [ "yes", "no", "maybe" ], "in": true }
-      }
-    },
-    "agent": { "href": "/agent/1", "method": "GET", "render": "embed" },
-    "customer": [ 
-      { "href": "/customer/1", "method": "GET" },
-      { "href": "/customer/2", "method": "GET" }
-    ]
-  },
-  "_embedded": {
-    "agent": {
-      "_links": {
-        "self": { "href": "/agent/1", "method": "GET" }
-      },
-      "name": "Mike"
-    },
-    "customer": [
-      {
-        "_links": {
-          "self": { "href": "/customer/1", "method": "GET" },
-          "edit": { 
-            "href": ".../{?user_id}",
-            "method": "PUT",
-            "enctype": "application/json",
-            "render": "resource",
-            "data": {
-              "name": { "type": "string", "required": true, "value": "Tom" },
-              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true, "value": "yes" },
-              "user_id": { "scope": "href", "required": true }
-            }
-          }
-        },
-        "name": "Tom",
-        "send_info": "yes"
-      },
-      {
-        "_links": {
-          "self": { "href": "/customer/2", "method": "GET" },
-          "edit": { 
-            "href": ".../{?user_id}",
-            "method": "PUT",
-            "enctype": "application/json",
-            "render": "resource",
-            "data": {
-              "name": { "type": "string", "required": true, "value": "Harry" },
-              "send_info": { "options": [ "yes", "no", "maybe" ], "in": true, "value": "no" },
-              "user_id": { "scope": "href", "required": true }
-            }
-          }
-        },
-        "name": "Harry",
-        "send_info": "no"
-      }
-    ]   
-  }
 }
 ```
 
@@ -628,30 +876,41 @@ Example:
 
 ```json
 {
-  "_meta": {
-    "data": {
-      "options": [0, 1, 2],
-      "value": 0
-    },
-    "data1": {
-      "_ref": ["data"],
-      "value": 1
-    },
-    "something": {
-      "max": 1,
-      "value": 2
-    },
-    "something_else": {
-      "_ref": ["data1", "something"]
-    },
-    "_embedded" : {
-      "_meta": {
-        "embedded_something": {
-          "_ref": ["something_else"]
+    "_meta": {
+        "data": {
+            "options": [
+                0,
+                1,
+                2
+            ],
+            "value": 0
+        },
+        "data1": {
+            "_ref": [
+                "data"
+            ],
+            "value": 1
+        },
+        "something": {
+            "max": 1,
+            "value": 2
+        },
+        "something_else": {
+            "_ref": [
+                "data1",
+                "something"
+            ]
+        },
+        "_embedded": {
+            "_meta": {
+                "embedded_something": {
+                    "_ref": [
+                        "something_else"
+                    ]
+                }
+            }
         }
-      }
     }
-  }
 }
 ```
 
@@ -659,34 +918,50 @@ would be interpreted as:
 
 ```json
 {
-  "_meta": {
-    "data": {
-      "options": [0, 1, 2],
-      "value": 0
-    },
-    "data1": {
-      "options": [0, 1, 2],
-      "value": 1
-    },
-    "something": {
-      "max": 1,
-      "value": 2
-    },
-    "something_else": {
-      "options": [0, 1, 2],
-      "max": 1,
-      "value": 2
-    }
-  },
-  "_embedded": {
     "_meta": {
-      "embedded_something": {
-        "options": [0, 1, 2],
-        "max": 1,
-        "value": 2
-      }
+        "data": {
+            "options": [
+                0,
+                1,
+                2
+            ],
+            "value": 0
+        },
+        "data1": {
+            "options": [
+                0,
+                1,
+                2
+            ],
+            "value": 1
+        },
+        "something": {
+            "max": 1,
+            "value": 2
+        },
+        "something_else": {
+            "options": [
+                0,
+                1,
+                2
+            ],
+            "max": 1,
+            "value": 2
+        }
+    },
+    "_embedded": {
+        "_meta": {
+            "embedded_something": {
+                "options": [
+                    0,
+                    1,
+                    2
+                ],
+                "max": 1,
+                "value": 2
+            }
+        }
     }
-  }
 }
 ```
 
@@ -704,15 +979,22 @@ Example:
 
 ```json
 {
-  "_meta": {
-    "monster" {
-      "demeanor": "scary"
-    },
-    "explosion": {
-      "occupation": "swamp thing",
-      "_ref": [ { "href": "/human/1", "method": "GET", "type": "application/json" }, "monster" ]
+    "_meta": {
+        "monster": {
+            "demeanor": "scary"
+        },
+        "explosion": {
+            "occupation": "swamp thing",
+            "_ref": [
+                {
+                    "href": "/human/1",
+                    "method": "GET",
+                    "type": "application/json"
+                },
+                "monster"
+            ]
+        }
     }
-  }
 }
 ```
 
@@ -724,24 +1006,24 @@ Content-Type: application/json
 Content-Length: 273
 
 {
-  "name": "Alex Olsen",
-  "occupation": "Scientist",
-  "demeanor": "friendly"
+    "name": "Alex Olsen",
+    "occupation": "Scientist",
+    "demeanor": "friendly"
 }
 ```
 
 ```json
 {
-  "_meta": {
-    "monster" {
-      "demeanor": "scary"
-    },
-    "explosion": {
-      "name": "Alex Olsen",
-      "occupation": "Swamp Thing",
-      "demeanor": "scary"
+    "_meta": {
+        "monster": {
+            "demeanor": "scary"
+        },
+        "explosion": {
+            "name": "Alex Olsen",
+            "occupation": "Swamp Thing",
+            "demeanor": "scary"
+        }
     }
-  }
 }
 ```
 
