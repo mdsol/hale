@@ -139,20 +139,18 @@ We'll define this order link object as follows:
  {
      "place_order": {
          "href": "www.example.com/coffeebucks/orders",
-         "request_encoding": "application/x-www-form-urlencoded",
          "method": "POST",
          "data": {}
      }
  }
  ```
-This link object is the basic description of a form. We haven't yet added the data objects that specify the properties of a coffee order, but we are pointing again to `www.example.com/coffeebucks/orders`. This time, however, we are using the `POST` HTP method. By specifying this method we tell the client server that the API server expects a request body. The `request_encoding` property tells the API server that the request body from the client should be encoded as `application/x-www-form-urlencoded`.
+This link object is the basic description of a form. We haven't yet added the data objects that specify the properties of a coffee order, but we are pointing again to `www.example.com/coffeebucks/orders`. This time, however, we are using the `POST` HTP method. By specifying this method we tell the client server that the API server expects a request body. The `request_encoding` isn't set here since it defaults to "application/x-www-form-urlencoded" but the property tells the API server that the request body from the client should be encoded as `application/x-www-form-urlencoded`.
 For the purpose of this exercise, we'll define the following attributes as things that the client can specify to create a drink order: `drink_type`, `iced`, `size`, `shots`, and `decaf`.
 Let's define each of these data objects one by one. For example, we define `drink_type` as follows:
  ```json
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -178,7 +176,6 @@ Let's add 'iced' next, as follows:
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -208,7 +205,6 @@ Now let's add `size`, as follows:
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -244,14 +240,13 @@ Now let's add `size`, as follows:
     }
 }
   ```
-With the `size` data object we see `type` again show up. This time, though, it specifies a `primitive` type and a `data` type. Note that the the primitive type is specified before the colon (':') and that it specifies the JSON data type that it is supposed to be represented with. The data type is specified after the colon (':') and is intended to provide a _hint_ to the client about what sort of type this is. In this case, we specify that it is a range type, which is a well-defined HTML input type. It could be used by the client to understand that the elements in the `options` property have a rank ordering.
+With the `size` data object we see `type` again show up. This time, though, it specifies a `primitive` type and a `data` type. Note that the the primitive type is specified before the colon (:) and that it specifies the JSON data type that it is supposed to be represented with. The data type is specified after the colon (':') and is intended to provide a _hint_ to the client about what sort of type this is. In this case, we specify that it is a range type, which is a well-defined HTML input type. It could be used by the client to understand that the elements in the `options` property have a rank ordering.
 
 We also specify a profile.  This profile links to a specific element of the `coffeebucks` profile, which could specify how the numbers map to the names for those sizes.  Alternatively, you could render this as follows:
   ```json
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -302,7 +297,6 @@ Let's add the `shots` property next, as follows:
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -356,7 +350,6 @@ Finally, we add a similar object for `decaf`, as follows:
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -447,7 +440,6 @@ When we put the whole of the 'place_order' Link Object into the rest of our Hale
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -549,7 +541,6 @@ In the following, we'll add those.
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -655,7 +646,6 @@ Here you might be tempted to define an `orders` attribute in the base of the doc
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -730,7 +720,7 @@ In this rendering, we add an `order_list` element. We could call it `orders` and
 Unlike the other links, `order_list` is a JSON array rather than a JSON object. By specifying this array, you are saying that each link object within this array belongs to the `order_list` relation. 
  NOTE: This is most likely to come up when a resource acts as a container. But nothing prevents you from specifying two different ways to "search" using this structure.
 #### Embedded Data
-We now have a complete resource. However, given that our client is likely to be an interface, it might be worthwhile to have a way of including the order information in the resulting document. To do this, you first need to define an order object as follows:
+We now have a complete resource. However, given that our client is likely to be an interface, it might be worthwhile to have a way of including the order information in the resulting document. To do this, you first need to define an order resource as follows:
 ```json
 {
     "_links": {
@@ -800,7 +790,6 @@ So, returning to our entry point, we can now embed these resources inside our ba
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -950,7 +939,7 @@ To summarize, to embed you create an array under `\_embedded` that is keyed by a
 With this addition, you have successfully constructed a complex Hale document for a fully Hypermedia, machine-driven, API to express a simple coffeebucks process. 
 Now let's see what else we can do with this.
 
-## complex objects
+## Complex Objects
 One of the first things one can notice about the above API is that it only allows a single drink to be created at a time.  However, it's clear that people in the real world order many drinks; fortunately there is a mechanism for hale to support this.  This is done my recursively defining the object to be submitted in a link.  Here we'll create another link relation that supports multiple drink orders.
 
 ```json
@@ -1086,7 +1075,6 @@ Our whole document now looks like this
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -1395,7 +1383,6 @@ Whenever a property is placed in "_meta" it automatically creates a "Reference O
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "_ref": [
@@ -1641,7 +1628,6 @@ The resulting document looks like this:
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "_ref": [
