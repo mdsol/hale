@@ -1,31 +1,29 @@
 # Hale Tutorial
-This document show how Hale renders documents by providing examples using the Coffee Bucks API.  It will go through every feature of Hale, providing a concrete example of how it's used.
+This document describes how the Hale serializer renders documents by providing examples using a ficitonal API, Coffee Bucks. The tutorial steps through every feature of Hale and provides concrete examples of how to use it.
 
 ## An Overview of Coffee Bucks
-Coffee Bucks is an API that represents the Point of Sale system for a coffee shop.  
+The Coffee Bucks APIrepresents the Point of Sale (PoS) system for a coffee shop.  
 
-## The Basic Hale document
-The most simple valid Hale document is an empty object
+## The Basic Hale Document
+The simplest valid Hale document is an empty object:
 ```json
 {}
 ```
-This is because none of the elements of a Hale document are required.  Obviously this document contains no information, but it nonetheless provides a canvas from which we will be working from.
+This is so because a hale document requires no elements.  Obviously this document contains no information, but it nonetheless provides a canvas from which we can work and that we will use in the following sections.
 
-## The Coffee Bucks entry point
-The first thing we want to do, is describe an API entry point.  This is the place in the API which allows one to perform the basic actions that would exist on a Point of Sale.  Here we anticipate a set of links that go to the other actions.  So our basic structure is going to look like this:
+## The Coffee Bucks Entry Point
+The first thing we want to do is to describe an API entry point. This entry point is the place in the API that allows client servers to perform the basic actions that exist on a PoS API. In the entry point we anticipate a set of links that go to the other actions.  So our basic structure looks like the following:
 ```json
 {
     "_links": {}
 }
 ```
-Here we have added the element \"_links".  The spec defines the \"_links" property as follows:
+Here we added the "_links" element.  The Hale spec defines the "_links" property as follows:
 ```
-It is an object whose property names are link relation types (as
-   defined by [RFC5988]) and values are either a Link Object or an array
-   of Link Objects.
+It is an object whose property names are link relation types (as defined by [RFC5988]). Its values are either a Link Object or an array of link objects.
 ```
-While this may seem obtuse, there's nothing special happening here.  A link object is just like the links or forms you find on web pages.  They describe relationships between resources.
-The most basic link relation that very Hypermedia API should define is the "self" link.  So let's add that:
+While this may seem obtuse, there's nothing special happening here.  A link object is just like the links or forms you find on web pages.  That is, link objects describe relationships between resources.
+As you might expect, the most basic link relation that every Hypermedia API should define is the "self" link.  So let's add that:
 
 ```json
 {
@@ -36,7 +34,7 @@ The most basic link relation that very Hypermedia API should define is the "self
     }
 }
 ```
-Now we have our first link in our Hale document.  In this case we have defines the 'self' link, which is a link describing the resource you are currently on. Since we are on the entry point of the API, I have decided to make the URL 'www.example.com/coffeebucks/'.  Let's go ahead and add the 'profile' link as well.
+Now we have the first link in the Hale document.  In this case, we have defined the `self` link, which is a link that describes the resource you are currently on. Since we are on the entry point of the API, I have decided to make the URL `www.example.com/coffeebucks/`.  Let's go ahead and add the `profile` link as well:
 ```json
 {
     "_links": {
@@ -50,8 +48,9 @@ Now we have our first link in our Hale document.  In this case we have defines t
     }
 }
 ```
-The profile is this case links to machine readable documentation that describes the document we're looking at.  Since in this example we are rendering the documentation with the ALPS media type, we put the enctype property under the 'profile' Link Object to tell the Client to request that mediatype when following that link.
-But suppose we wanted to also provide an HTML page that was intended for human consumption in addition to the machine readable ALPS.  In that case we have the value of the enctype property pointing to a list of enctypes.
+The `profile` links to machine-readable documentation that describes the document we're looking at.  Since in this example we are rendering the documentation with the ALPS media-type, we put the `enctype` property under the `profile` link object to tell a client server to request that media-type when following that link.
+
+But suppose we want to also provide an HTML page that was intended for human consumption in addition to the machine-readable ALPS document.  In that case, you provide the value of the `enctype` property that points to a list of enctypes.
 ```json
 {
     "_links": {
@@ -68,8 +67,7 @@ But suppose we wanted to also provide an HTML page that was intended for human c
     }
 }
 ```
-This tells the client that when they are following the 'profile' link they can either request the profile as 'application/alps+xml' or as 'text/html'.  By default the client is expected to request the current mediatype in this case 'application/hale+json'
-
+This tells client servers that when they follow the `profile` link they can either request the profile as `application/alps+xml` or as `text/html` media-types.  By default, the client server is expected to request the current media-type; in this case, the media-type is `application/hale+json`.
 ### Links that change state
 There are two actions that one is able to take from the entry point.  They can either see a list of orders, or they can place a new order.
 
@@ -95,7 +93,9 @@ Let's start by specifying how to see a list of orders.  Using HTTP this is a GET
     }
 }
 ```
-The URL chosen here is the same as the self link, because I've decided that another resource would be superfluous, but this is going to show all orders regardless of their current state.  What's probably more interesting is to show orders that are in a particular state.  Let's go ahead and add that capability into our Hale document.
+The URL chosen here is the same as the `self` link because I've decided that another resource is superfluous. Still, this link will show all orders, regardless of their current state. What's probably more important for the business workflow is to show orders that are in a particular state. 
+
+Let's go ahead and add that capability into our Hale document as follows:
 ```json
 {
     "_links": {
@@ -127,29 +127,30 @@ The URL chosen here is the same as the self link, because I've decided that anot
     }
 }
 ```
-Here we have added the order_status template variable in the 'href' property, and the matching 'order_status' data object, which contains two properties.  The 'scope' property tells the client whether the data belongs in the URL or in the request body.  Since the 'scope' value is 'href', the client knows that this 'order_status' belongs in the URL.
-The 'options' property here specifies that valid values for 'order_status' are 'pending_payment', 'preparing', or 'fulfilled' - which are the states an order can be in, and the 'in' property specifies that those are the only possible fields.
- We are also allowing multiple values to be set for 'order_status', which means we're allowing URL's such as 'www.example.com/coffeebucks?order_status=preparing\&order_status=fulfilled' which would show a list of orders matching either of those.
- 
+With this addition to the Hale document, we have added the `order_status` template variable in the `href` property, as well as a matching `order_status` data object that has two properties. 
+The `scope` property tells the client server whether the data belongs in the URL or in the request body. Since the `scope` value is `href`, the client knows that this `order_status` belongs in the URL.
+The `options` property here specifies that valid values for `order_status` are `pending_payment`, `preparing`, or `fulfilled`. These are the "states" that an order can have. The `in` property specifies that those are the only possible fields.
+We are also allowing multiple values to be set for `order_status`, which means that we are allowing URLs such as 'www.example.com/coffeebucks?order_status=preparing\&order_status=fulfilled' which would show a list of orders matching either of those.
+
 #### Creating a Coffee Order
- The other thing we're going to want to be able to do is actually create the coffee order.  Again this is just another Link Object, but since it's likely to be a more complicated Link Object we'll start by defining it separate from the context of the rest of the document, and then integrate it into the rest of the document at the end.
+The other thing we're going to want to do is to create the coffee order.  Again, this is just another link object. However, since it's likely to be a more complicated link object we'll start by defining it separately from the context of the rest of the document. Then we can integrate that link object into the rest of the document at the end.
+We'll define this order link object as follows:
  ```json
  {
      "place_order": {
          "href": "www.example.com/coffeebucks/orders",
-         "request_encoding": "application/x-www-form-urlencoded",
          "method": "POST",
          "data": {}
      }
  }
  ```
- This is the basic description of a form. We haven't yet added the Data Objects that specify the properties of a Coffee Order, but we are pointing again to 'www.example.com/coffeebucks/orders', however this time we are using the 'POST' method. By specifying this method we are telling the client that the server is expecting a request body; the request_encoding tells the server that the request body should be encoded as 'application/x-www-form-urlencoded'.
- For the purpose of this exercise we'll define the following attributes as things which the client can specify to create a drink order: drink_type, iced, size, shots, decaf.  Let's define each of these Data Objects one by one.
+This link object is the basic description of a form. We haven't yet added the data objects that specify the properties of a coffee order, but we are pointing again to `www.example.com/coffeebucks/orders`. This time, however, we are using the `POST` HTP method. By specifying this method we tell the client server that the API server expects a request body. The `request_encoding` isn't set here since it defaults to "application/x-www-form-urlencoded" but the property tells the API server that the request body from the client should be encoded as `application/x-www-form-urlencoded`.
+For the purpose of this exercise, we'll define the following attributes as things that the client can specify to create a drink order: `drink_type`, `iced`, `size`, `shots`, and `decaf`.
+Let's define each of these data objects one by one. For example, we define `drink_type` as follows:
  ```json
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -169,12 +170,12 @@ The 'options' property here specifies that valid values for 'order_status' are '
     }
 }
   ```
-  Here we have specified the 'drink_type' Data Object.  Like 'order_status' before it specifies a set of possible orders and that it only accepts values within that set.  Unlike 'order_status' it is required, does not allow multiple values, and is intended to be in the request body instead of the URL.  Let's add 'iced' next.
- ```json
+Here we have specified the `drink_type` data object. Like `order_status` before, `drink_type` specifies a set of possible orders and also specifies it only accepts values within that set.  Unlike `order_status`, however, it is required, does not allow multiple values, and is in the request body instead of the URL. 
+Let's add 'iced' next, as follows:
+```json
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -198,13 +199,12 @@ The 'options' property here specifies that valid values for 'order_status' are '
     }
 }
   ```
-  The 'iced' Data Object uses very different attributes. Here 'type' is specified, telling the client that the expected datatype is a JSON Boolean type. The 'value' property tells the client that if the 'iced' property is not sent in the request body, it will assume that the value is false.  Now let's add size.
-multiple values, and is intended to be in the request body instead of the URL.  Let's add 'iced' next.
-  ```json
+The `iced` data object uses very different attributes. Here we specify `type`, which tells the client that the expected data type is a JSON Boolean type. The `value` property tells the client that if the `iced` property is not in the request body, the API server will assume that the value is `false`.  
+Now let's add `size`, as follows:
+```json
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -240,13 +240,13 @@ multiple values, and is intended to be in the request body instead of the URL.  
     }
 }
   ```
-  With the 'size' Data Object we see type again show up.  This time it specifies both a 'primitive' type, but also a 'data' type.  The primitive type is specified before the colon (':'), and specifies the JSON Datatype that it is supposed to be represented with. The data type is specified after the colon (':') and is intended to provide a _hint_ to the client about what sort of type this is. In this case we've specified that it is a Range type, which is a well defined HTML Input type, and could be used by the client to understand that the elements in the 'options' property have rank ordering.
-  We also specify a profile here.  This links to a specific element of the coffeebucks profile, which could specify how the numbers map to the names for those sizes.  Alternatively it could have been rendered as follows.
+With the `size` data object we see `type` again show up. This time, though, it specifies a `primitive` type and a `data` type. Note that the the primitive type is specified before the colon (:) and that it specifies the JSON data type that it is supposed to be represented with. The data type is specified after the colon (':') and is intended to provide a _hint_ to the client about what sort of type this is. In this case, we specify that it is a range type, which is a well-defined HTML input type. It could be used by the client to understand that the elements in the `options` property have a rank ordering.
+
+We also specify a profile.  This profile links to a specific element of the `coffeebucks` profile, which could specify how the numbers map to the names for those sizes.  Alternatively, you could render this as follows:
   ```json
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -289,12 +289,14 @@ multiple values, and is intended to be in the request body instead of the URL.  
     }
 }
   ```
-  This is a more friendly rendering.  Here it specifies instead that its primitive type is Integer, and its HTML datatype is number (this could be anything, it could be datatype 'coffeesizes', but Hale anticipates that the client always understands HTML types, whereas coffeesizes requires specialized client knowledge).  For the options we have defined a list of objects that give a name to each of the sized, and allows the Client to "think" of the sizes either as numbers or as their name. Let's look at the 'shots' property next.
-  ```json
+This is a friendlier rendering.  Note that this rendering specifies instead that its primitive type is integer, and its HTML data type is number. 
+  NOTE: This data type could be anything; for example, it could be data type `coffeesizes`. But Hale anticipates that the client always understands HTML types, whereas `coffeesizes` would require specialized client knowledge. 
+For the options in the example, we defined a list of objects that give a name to each of the sizes and allows the client to "think" of the sizes either as numbers or as their name. 
+Let's add the `shots` property next, as follows:
+```json
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -342,12 +344,12 @@ multiple values, and is intended to be in the request body instead of the URL.  
     }
 }
   ```  
-  The shots Data Object is a more sensible Range input.  Here we define a minimum with 'min', and we define a maximum with 'max'.  This tells the client that the most shots ever allowed in 16, and the least ever allowed is 0.  Here we haven't specified 'value', nor have we specified 'required' because the server will create a default number of shots based upon the size of the drink and the kind of drink requested.  We're going to use a similar Object for 'decaf'.
-  ```json
+The shots data object is a more sensible range input.  Here we define a minimum with `min` and we define a maximum with `max`.  This tells the client that the most shots ever allowed is 16 and the least ever allowed is 0.  Note that in this rendering we haven't specified `value`, nor have we specified `required`. This is because the API server will create a default number of shots based upon the size of the drink and the kind of drink that was requested. 
+Finally, we add a similar object for `decaf`, as follows:
+```json
 {
     "place_order": {
         "href": "www.example.com/coffeebucks/orders",
-        "request_encoding": "application/x-www-form-urlencoded",
         "method": "POST",
         "data": {
             "drink_type": {
@@ -404,9 +406,10 @@ multiple values, and is intended to be in the request body instead of the URL.  
     }
 }
   ```  
-  The 'decaf' Data Object looks almost exactly like the 'shots' Data Object, except that it is using a property called 
-  'lte'.  This property is not defined in the Hale spec, instead it is using section 5.3 Constraint Extensions. In this case we want to tell the client that 'decaf' should be less than 'shots', since 'decaf' is intended to specify which proportion of those shots should be made with 'decaf' coffee.  However 'lte' is not in the spec, so if the client ignores this property it may happen to work - but should the client get an error from setting 'decaf' greater than 'shots', it can scrutinize the Data Objects, dereference the profile, and register the 'lte' Constraint Type.
-  When we put the whole of the 'place_order' Link Object into the rest of our document, we end up with this.
+The `decaf` data object looks almost exactly like the `shots` Data Object. But note that it uses a property called `lte`.  This property is not defined in the Hale spec; instead it is using section 5.3 Constraint Extensions. In this case, we want to tell the client that `decaf` should be less than `shots` since 'decaf' is intended to specify which proportion of those shots should be made with 'decaf' coffee.  However 'lte' is not in the spec, so if the client ignores this property it may happen to work - but should the client get an error from setting 'decaf' greater than 'shots', it can scrutinize the Data Objects, dereference the profile, and register the 'lte' Constraint Type.
+
+####Putting It All Together
+When we put the whole of the 'place_order' Link Object into the rest of our Hale document, we have the following:
 ```json
 {
     "_links": {
@@ -437,7 +440,6 @@ multiple values, and is intended to be in the request body instead of the URL.  
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -495,10 +497,11 @@ multiple values, and is intended to be in the request body instead of the URL.  
     }
 }
 ```  
-This gives us the basic links for our API, but this page isn't just here for providing links, we also want to provide the set of orders in the system.  This means we need to add some data, and some more controls.
+So far, we've added the basic links for our API, but this Hale document isn't just here for providing links. We also want to provide the set of orders in the system. This means we need to add some data and some more controls.
 
 #### Adding the orders data
-It is likely that you are going to want to tell the client how many orders there are total, how many orders are currently being displayed, and you're going to want pagination.  So let's add that.
+It is likely that you are going to want to tell the client how many total orders there are, how many orders are currently being displayed. You're also going to want to paginate the results. 
+In the following, we'll add those.
 ```json
 {
     "_links": {
@@ -538,7 +541,6 @@ It is likely that you are going to want to tell the client how many orders there
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -598,10 +600,12 @@ It is likely that you are going to want to tell the client how many orders there
     "total_count": 6
 }
 ``` 
-Here we've added a 'next' link that points to the current url with "?page=2" appended to the end.  We've also added a 'page' attribute to the 'orders' link, allowing the client to skip to a specific page.
-Also, we've added the 'count' and 'total_count' attributes to the base document.  The client is capable of understanding these attributes by looking at the profile provided by the 'profile' link.
-Finally, we need to actually put the references to the orders in the document.
-Here it might be tempting to define a 'orders' attribute in the base of the document.  Resist this temptation; instead we want to put this information in our \"_links" section.
+In this rendering, we add a `next` link that points to the current url with `?page=2` appended to the end. We also add a `page` attribute to the `orders` link, which enables the client to skip to a specific page. We also add the `count` and `total_count` attributes to the base document.
+The client can understand these attributes by looking at the profile provided in the `profile` link.
+
+#### Adding Order References
+Finally, we need to put references to the orders in the document.
+Here you might be tempted to define an `orders` attribute in the base of the document. Resist this temptation; instead put this information in the \"_links" section as follows:
 ```json
 {
     "_links": {
@@ -642,7 +646,6 @@ Here it might be tempting to define a 'orders' attribute in the base of the docu
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -713,10 +716,11 @@ Here it might be tempting to define a 'orders' attribute in the base of the docu
     "total_count": 6
 }
 ```
-Here we've added an 'order_list' element.  We could have called in 'orders', and made our 'orders' link instead be called 'navigate' or something, but it doesn't really matter what we call them - their proper semantic meaning is described in the profile.
-Unlike the other links, 'order_list' is a JSON array rather than a JSON object.  When specifying this, you are saying each Link Object within this array belongs to the 'order_list' relation.  This is most likely to come up when a resource is acting as a container, but there is nothing to prevent you from specifying two different ways to 'search' using this structure.
+In this rendering, we add an `order_list` element. We could call it `orders` and call the `orders` link `navigate` or something such as that. Remember that it doesn't really matter what you call them since their proper semantic meaning is described in the profile.
+Unlike the other links, `order_list` is a JSON array rather than a JSON object. By specifying this array, you are saying that each link object within this array belongs to the `order_list` relation. 
+ NOTE: This is most likely to come up when a resource acts as a container. But nothing prevents you from specifying two different ways to "search" using this structure.
 #### Embedded Data
-We now have a complete resource.  However, given that our client is likely to be an interface, it might be worthwhile to have a way of including the order information in the document.  To do this first we'll need to define an order object.
+We now have a complete resource. However, given that our client is likely to be an interface, it might be worthwhile to have a way of including the order information in the resulting document. To do this, you first need to define an order resource as follows:
 ```json
 {
     "_links": {
@@ -744,9 +748,9 @@ We now have a complete resource.  However, given that our client is likely to be
     "decaf": 1
 }
 ```
-Here we have an order resource.  It is a double half-caf latte that is currently being prepared, and provides a link to change the state of the resource to 'fulfilled'.  This is a PUT relation, and no additional data about the 'status' attribute is provided, because the only valid value from this state is 'fulfilled'.
+In this rendering, there is an `order` resource. It is a double, half-caf latte that is currently being prepared. There's also a link to change the state of the resource to `fulfilled`. This is a PUT relation, and no additional data about the 'status' attribute is provided, because the only valid value from this state is `fulfilled`.
 It also defines "render" which instructs the client to take the current values of "www.example.com/coffeebucks/1" and prepopulate the data elements with them. If the server supported partial PUT's - treating PUT like PATCH then the "render" property would be unnecassary.
-So, returning to our entry point, we can now embed these resources inside our base document as follows.
+So, returning to our entry point, we can now embed these resources inside our base document as follows:
 ```json
 {
     "_links": {
@@ -786,7 +790,6 @@ So, returning to our entry point, we can now embed these resources inside our ba
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -932,10 +935,11 @@ So, returning to our entry point, we can now embed these resources inside our ba
     "total_count": 6
 }
 ```
-To embed, we have created an array under '\_embedded' that is keyed by an attribute that matches the '\_link' attribute - in this case 'order_list'.  Each object in the 'order_list' has it's own state, and so provides different links contingent on that state.
-With this, we have successfully constructed a complex Hale document for a fully Hypermedia - machine driven - API to express a simple coffeebucks process.  Now let's see what else we can do with this.
+To summarize, to embed you create an array under `\_embedded` that is keyed by an attribute that matches the `\_link` attribute; in this case, `order_list`.  Each object in the 'order_list' has its own state. So it provides different links contingent on that state.
+With this addition, you have successfully constructed a complex Hale document for a fully Hypermedia, machine-driven, API to express a simple coffeebucks process. 
+Now let's see what else we can do with this.
 
-## complex objects
+## Complex Objects
 One of the first things one can notice about the above API is that it only allows a single drink to be created at a time.  However, it's clear that people in the real world order many drinks; fortunately there is a mechanism for hale to support this.  This is done my recursively defining the object to be submitted in a link.  Here we'll create another link relation that supports multiple drink orders.
 
 ```json
@@ -1071,7 +1075,6 @@ Our whole document now looks like this
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "drink_type": {
@@ -1380,7 +1383,6 @@ Whenever a property is placed in "_meta" it automatically creates a "Reference O
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "_ref": [
@@ -1626,7 +1628,6 @@ The resulting document looks like this:
         },
         "place_order": {
             "href": "www.example.com/coffeebucks/orders",
-            "request_encoding": "application/x-www-form-urlencoded",
             "method": "POST",
             "data": {
                 "_ref": [
