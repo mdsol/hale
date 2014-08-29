@@ -935,12 +935,14 @@ So, returning to our entry point, we can now embed these resources inside our ba
     "total_count": 6
 }
 ```
-To summarize, to embed you create an array under `\_embedded` that is keyed by an attribute that matches the `\_link` attribute; in this case, `order_list`.  Each object in the 'order_list' has its own state. So it provides different links contingent on that state.
-With this addition, you have successfully constructed a complex Hale document for a fully Hypermedia, machine-driven, API to express a simple coffeebucks process. 
-Now let's see what else we can do with this.
+To summarize, to embed you create an array under `\_embedded` that is keyed by an attribute that matches the `\_link` attribute; in this case, `order_list`.  Each object in the 'order_list' has its own state. So it provides different links that are contingent on that state.
+
+With this addition, you have successfully constructed a complex Hale document for a fully hypermedia, machine-driven, API to express a simple coffeebucks process. 
+
+Now let's see what else we can do with a Hale document.
 
 ## Complex Objects
-One of the first things one can notice about the above API is that it only allows a single drink to be created at a time.  However, it's clear that people in the real world order many drinks; fortunately there is a mechanism for hale to support this.  This is done my recursively defining the object to be submitted in a link.  Here we'll create another link relation that supports multiple drink orders.
+One of the first things you notice about the Coffee Bucks API is that it only allows clients to create one drink at a time. Clearly, though, people in the real world order many drinks. Fortunately there is a mechanism in Hale to support this real-world circumstance. That is, we can recursively define the object that is submitted in a link. To do this, we create another link relation that supports the submission of multiple drink orders.
 
 ```json
 {
@@ -1012,10 +1014,14 @@ One of the first things one can notice about the above API is that it only allow
     }
 }
 ```
-This looks very much like previously defined "place_order", but here there are several important changes.
-The first thing you'll notice is that it has a different request_encoding, because "form-urlencoded" doesn't specify a way to POST complex data structures.  The data element contains two fields: multi_order and order.  "mutli_order" is there to specify to the server that it is going to have more than a single order, "orders" will actually contain all the orders.
-Looking at "orders", note that the "type" is an object.  Type "object" means that it's expecting a JSON Object (or equivalent).  It also specifies "multi" as true, which tells the client that it anticipates in this case an array of objects.
-"orders" just like the request specifies its own "data" field which then specifies the sub-elements exactly as before.  So a client would send a request looking like this:
+This looks very much like the previously defined `place_order` attribute, but note several important changes.
+
+First, notice that there's a different `request_encoding`. This is because the `form-urlencoded` attribute doesn't specify a way to POST complex data structures. Second, the `data` element contains two fields: `multi_order` and `orders`.  "The `mutli_order` field specifies to the server computer that it is going to have more than a single order. The `orders` field actually contains all the orders.
+
+Looking at the `orders` field, note that its `type` is `object`. Being of an object type means that the `type` field is expecting a JSON object or its equivalent. It also specifies `multi` as true; this tells the client that the server anticipates in this case an array of objects.
+
+The `orders` field specifies its own `data` field which then identifies the sub-elements exactly as before. So a client would send a request looking like the following, telling the coffee server to make a small regular and a small iced coffee:
+
 ```json
 {
     "multi_order": true,
@@ -1032,10 +1038,11 @@ Looking at "orders", note that the "type" is an object.  Type "object" means tha
     ]
 }
 ```
-Which of course is telling the server to make a small regular and a small iced coffee.
 
 ## _meta 
-Our whole document now looks like this
+
+With the preceding additions included, the Hale document now looks has the following information:
+
 ```json
 {
     "_links": {
@@ -1287,8 +1294,11 @@ Our whole document now looks like this
 }
 ```
 
-This document, while providing all of our functionality, is needlessly verbose.  To remedy this we are going to lean on Hale's "_meta" feature.  "_meta" provides a way of specifying arbitrary information _about_ the current resource which is not itself a property of that resource.  For example, we might specify "store_location" as an arbitrary meta property of the resource - store location is relevant to the resource, but is not itself a propery of an order.
-Whenever a property is placed in "_meta" it automatically creates a "Reference Object", which is a way of specifying information that can be used by other resources within the document.  In our endeavor to clean up the document, we will start by getting the biggest target - namely the common fields in "multi_order" and "place_order".
+As is, the document will work. While the document provides all of our functionality, however, it is needlessly verbose. To tweak and tighten up the document, we can use Hale's `_meta` feature. The `_meta` feature allows you to specify arbitrary information _about_ the current resource, information that is not itself a property of that resource. For example, you can specify `store_location` as an arbitrary meta property of the resource. Store location is relevant to the resource, but it is not a propery of an order itself.
+
+When a property is placed in `_meta` it automatically creates a _reference object_. Including a reference object in the definition of a state enables you to specify information that other resources in the document can use. In an endeavor to tighten up the document, you can use a `_meta` attribute consolidate the biggest chunk of the document, namely the common fields that the `place_order` and `multi_order` fields have.
+
+The following changes reflect this use of the `_meta` feature to get this data.
 
 ```json
 {
@@ -1501,11 +1511,13 @@ Whenever a property is placed in "_meta" it automatically creates a "Reference O
 }
 ```
 
-Here you'll note that we define "order_properties" under the "_meta" section of the document.  This defines an "order_properties" reference object, which can be used anywhere in the document with the "_ref" tag.  The "_ref" tag always takes a list of tags (which are interpreted in from first to last), and these instruct the client to replace that "_ref" tag with the listed properties.
+In this emendation of the document, you'll note that we define a new reference object, `order_properties`, in the `_meta` section of the document. Once you define it, you can use `order_properties` throughout the document with the `_ref` tag. This `order_properties` tag always takes a list of tags which are interpreted from first to last item. These list tags instruct the client to replace that "_ref" tag with the listed properties.
 
 ## target
-Now that the document is a little more terse, there is one other thing to consider.  The "drink_type" contains a menu.  It may be out of the servers scope to know what that menu is, and the menu may change; so instead of putting the menu inside the document explicitely, we can instead reference an external resource to populate the document.
-Here we'll change "order_properties" to use a "_ref" object and get the list of menu items
+Now that the document is a little more terse, there is one other thing to consider. The `drink_type` element contains a menu. It may be out of the server's scope to know what that menu is and the menu may change. Therefore, instead of putting the menu inside the document explicitely, we can just reference an external resource to populate the document.
+
+In the following rendering, we'll change `order_properties` to use a `_ref` object and get the list of menu items:
+
 ```json
 {
     "order_properties": {
@@ -1525,10 +1537,12 @@ Here we'll change "order_properties" to use a "_ref" object and get the list of 
     }
 }
 ```
-This tells the client to populate options with the current menu items "item_name"s, and replace "options" under "drink_type" with the result.
 
-Adding that we'll make the document a little more terse by using {"render": "embed"} instead of automatically rendering the items, and we'll add a "shot_base" in "_meta" to reduce that replication.
-The resulting document looks like this:
+This change tells the client to populate options with the current menu items `item_names` and replace `options` under `drink_type` with the result.
+
+Adding that, we'll also make the document a little more terse by using {"render": "embed"} instead of automatically rendering the items. We'll also add a `shot_base` in `_meta` to reduce that replication.
+
+The following rendering shows what the Hale document now looks like:
 
 ```json
 {
@@ -1673,4 +1687,4 @@ The resulting document looks like this:
     "total_count": 6
 }
 ```
-And thus we have successfully rendered a Hale document implementing a Coffeebucks API.
+With these changes, we have successfully rendered a Hale document that implements a Coffeebucks API.
