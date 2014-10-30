@@ -810,11 +810,13 @@ Example:
             ]
         },
         "_embedded": {
-            "_meta": {
-                "embedded_something": {
-                    "_ref": [
-                        "something_else"
-                    ]
+            "item": {
+                "_meta": {
+                    "embedded_something": {
+                        "_ref": [
+                            "something_else"
+                        ]
+                    }
                 }
             }
         }
