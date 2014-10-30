@@ -858,15 +858,17 @@ would be interpreted as:
         }
     },
     "_embedded": {
-        "_meta": {
-            "embedded_something": {
-                "options": [
-                    0,
-                    1,
-                    2
-                ],
-                "max": 1,
-                "value": 2
+        "item": {
+            "_meta": {
+                "embedded_something": {
+                    "options": [
+                        0,
+                        1,
+                        2
+                    ],
+                    "max": 1,
+                    "value": 2
+                }
             }
         }
     }
