@@ -808,15 +808,15 @@ Example:
                 "data1",
                 "something"
             ]
-        },
-        "_embedded": {
-            "item": {
-                "_meta": {
-                    "embedded_something": {
-                        "_ref": [
-                            "something_else"
-                        ]
-                    }
+        }
+    },
+    "_embedded": {
+        "item": {
+            "_meta": {
+                "embedded_something": {
+                    "_ref": [
+                        "something_else"
+                    ]
                 }
             }
         }
