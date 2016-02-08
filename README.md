@@ -943,12 +943,12 @@ Content-Length: 273
 
 [Shea Valentine](https://github.com/sheavalentine-mdsol) and [Mark W. Foster](https://github.com/fosdev)
 
-[*Data Objects*]: #7-data-objects
-[*Data Object*]: #7-data-objects
-[*Link Objects*]: #6-link-objects
-[*Link Object*]: #6-link-objects
-[*Reference Object*]: #5-reference-objects
-[*Reference Objects*]: #5-reference-objects
-[*Resource Object*]: #4-resource-objects
-[*Resource Objects*]: #4-resource-objects
+[*Data Objects*]: #5-data-objects
+[*Data Object*]: #5-data-objects
+[*Link Objects*]: #4-link-objects
+[*Link Object*]: #4-link-objects
+[*Reference Object*]: #7-reference-objects
+[*Reference Objects*]: #7-reference-objects
+[*Resource Object*]: #6-resource-objects
+[*Resource Objects*]: #6-resource-objects
 [I-D.wilde-profile-link]: http://tools.ietf.org/html/draft-wilde-profile-link-04
